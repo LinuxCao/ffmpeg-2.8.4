@@ -3678,8 +3678,16 @@ static int lockmgr(void **mtx, enum AVLockOp op)
 }
 
 /* Called from the main */
-int main(int argc, char **argv)
+int ffplay_init(int argc, char **argv)
 {
+	int i=0;
+	printf("You have inputed total %d argments\n",argc);  
+	for(i=0;i<argc;i++)  
+	{  
+		printf("arg%d : %s\n",i,argv[i]);  
+	} 
+ 
+	av_log(NULL, AV_LOG_FATAL, "ffplay_init\n");
     int flags;
     VideoState *is;
     char dummy_videodriver[] = "SDL_VIDEODRIVER=dummy";
