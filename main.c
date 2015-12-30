@@ -6,11 +6,18 @@
 #include <gtk/gtk.h>  
 #include <string.h>  
 #include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
 
 #include "main.h"  
 #include "ffplay.h" 
 
   
+/************************************************************************
+* Static Variable Define Section
+************************************************************************/
 static GtkWidget *main_window;  
 static GtkWidget *play_button;  
 static GtkWidget *pause_button;  
@@ -21,20 +28,21 @@ static GtkWidget *seek_scale;
 static GtkWidget *video_output;  
 
 static char *current_filename = NULL;  
+
+pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
  
  // 函数实现
-void* playeropen(const gchar *file)
+void *playeropen_thread(const char *file)
 {
-	g_print("playeropen\n"); 
+	g_print("playeropen_thread start\n"); 
 	char *pfile[2];
 	pfile[0]="ffplay";
 	pfile[1]= file;
 	printf("file:%s\n",file);
 	printf("pfile[0]:%s\n",pfile[0]);
 	printf("pfile[1]:%s\n",pfile[1]);
+	//playeropen_msg_process_thread
 	ffplay_init(2,pfile);
-	return TRUE;
-
 }
 
  
@@ -123,7 +131,7 @@ static void play_clicked(GtkWidget *widget, gpointer data)
 		{  
 			gtk_widget_set_sensitive(GTK_WIDGET(stop_button), TRUE);  
 			gtk_widget_set_sensitive(GTK_WIDGET(pause_button), TRUE);  
-			gtk_widget_set_sensitive(GTK_WIDGET(play_button), FALSE); 
+			//gtk_widget_set_sensitive(GTK_WIDGET(play_button), FALSE); 
 			g_print("gui_status_update(STATE_PLAY)\n");    
 			gui_status_update(STATE_PLAY);  
 			g_print("Play success\n");    
@@ -265,7 +273,27 @@ void gui_update_time(const gchar *time, const gint64 position, const gint64 leng
 // 更新播放状态  
 void gui_status_update(PlayerState state)  
 {  
-    g_print("gui_status_update\n");  
+	g_print("gui_status_update\n");  
+	switch (state) 
+	{  
+		case STATE_STOP:  
+			gtk_widget_set_sensitive(GTK_WIDGET(stop_button), FALSE);  
+			gtk_widget_set_sensitive(GTK_WIDGET(pause_button), FALSE);             
+			gtk_label_set_markup(GTK_LABEL(status_label), "<b>已停止</b>");  
+			gtk_range_set_value(GTK_RANGE(seek_scale), 0.0);        
+			gtk_label_set_text(GTK_LABEL(time_label), "00:00:00");  
+		break;  
+		case STATE_PLAY:  
+			gtk_widget_set_sensitive(GTK_WIDGET(stop_button), TRUE);  
+			gtk_widget_set_sensitive(GTK_WIDGET(pause_button), TRUE);              
+			gtk_label_set_markup(GTK_LABEL(status_label), "<b>播放中</b>");  
+		break;  
+		case STATE_PAUSE:             
+			gtk_label_set_markup(GTK_LABEL(status_label), "<b>已暂停</b>");  
+		break;  
+		default:  
+		break;  
+	}  
 }  
 /*  
 static gboolean bus_callback(GstBus *bus, GstMessage *message, gpointer data)  
@@ -285,9 +313,18 @@ static gboolean build_gstreamer_pipeline(const gchar *uri)
 gboolean load_file(const gchar *uri)  
 {  
 	g_print("load_file\n"); 
-	if(playeropen(uri))
-		return TRUE;
-	return FALSE;
+	//g_idle_add((GSourceFunc)playeropen,uri);
+	//if(playeropen(uri))
+		
+	int err;
+    err = pthread_create(&playeropen_msg_process_thread_tid, NULL, playeropen_thread, uri);
+    if (err != 0)
+        printf("can't create thread: %s\n", strerror(err));
+	else
+		printf("playeropen_thread pthread_create success\n");
+	pthread_detach(playeropen_msg_process_thread_tid);
+	
+	return TRUE;
 }  
 
 /*
@@ -330,7 +367,10 @@ int main(int argc, char **argv[])
     // 创建主窗口GUI  
     gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
     // 显示  
-    gtk_widget_show_all(GTK_WIDGET(main_window));     
+    gtk_widget_show_all(GTK_WIDGET(main_window));    
+
+	g_thread_init (NULL);
+	
     // 开始主循环  
     gtk_main();  
   
