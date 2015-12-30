@@ -1,7 +1,21 @@
-/* 
-*main.c  
-*Simple media player based on Gstreamer and GTK 
-*/   
+ /************************************************************************
+* File Name : main.c
+* Copyright :  OS-easy Corporation, All Rights Reserved.
+* Module Name : Main Process 
+*
+* Create Date : 2015/12/30
+* Author/Corporation : CaoLinfeng/OS-easy
+*
+*Abstract Description : Simple media player based on ffplay and GTK 
+*
+----------------------------------------Revision History---------------------------------
+* No     Version  	 Date      		Revised By		 Item		 		        Description
+* 1       V0.1    2015/12/30       CaoLinfeng 	   VDI Project           Main Process For GTK and ffplay
+*
+************************************************************************/
+/************************************************************************
+* Include File Section
+************************************************************************/
 #include <gdk/gdkx.h>  
 #include <gtk/gtk.h>  
 #include <string.h>  
@@ -9,10 +23,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-
-
 #include "main.h"  
 #include "ffplay.h" 
+#include "define_ffplay.h"
 
   
 /************************************************************************
@@ -26,11 +39,13 @@ static GtkWidget *status_label;
 static GtkWidget *time_label;  
 static GtkWidget *seek_scale;  
 static GtkWidget *video_output;  
-
 static char *current_filename = NULL;  
 
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
- 
+
+/************************************************************************
+* Function Define Section
+************************************************************************/
  // 函数实现
 void *playeropen_thread(const char *file)
 {
@@ -45,8 +60,6 @@ void *playeropen_thread(const char *file)
 	ffplay_init(2,pfile);
 }
 
- 
- 
 // 打开文件  
 static void file_open(GtkAction *action)  
 {  
@@ -145,7 +158,9 @@ static void play_clicked(GtkWidget *widget, gpointer data)
   
 static void pause_clicked(GtkWidget *widget, gpointer data)  
 {           
-	g_print("pause_clicked\n");               
+	g_print("pause_clicked\n"); 
+	g_print("toggle_pause\n");    	
+	toggle_pause(get_videostate_for_gtk());	
 }  
   
 static void stop_clicked(GtkWidget *widget, gpointer data)  

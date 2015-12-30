@@ -1,13 +1,28 @@
+ /************************************************************************
+* File Name : main.h
+* Copyright :  OS-easy Corporation, All Rights Reserved.
+* Module Name : Main Process 
+*
+* Create Date : 2015/12/30
+* Author/Corporation : CaoLinfeng/OS-easy
+*
+*Abstract Description : Simple media player based on ffplay and GTK 
+*
+----------------------------------------Revision History---------------------------------
+* No     Version  	 Date      		Revised By		 Item		 		        Description
+* 1       V0.1    2015/12/30       CaoLinfeng 	   VDI Project           Main Process For GTK and ffplay
+*
+************************************************************************/
 
-
-
-/* 
- * main.h 
- */  
-  
+/************************************************************************
+* Multi-Include-Prevent Section
+************************************************************************/
 #ifndef MAIN_H  
 #define MAIN_H  
-  
+ 
+/************************************************************************
+* Include File Section
+************************************************************************/ 
 #include <gtk/gtk.h>  
 #include <semaphore.h>
 #include <libavcodec/avcodec.h>
@@ -26,76 +41,13 @@
 #include "libavutil/mem.h"
 #include "libavutil/avstring.h"
 #include "libavutil/samplefmt.h"
+#include "define_ffplay.h"
 
-// 常量定义
-#define DEF_PKT_QUEUE_ASIZE   50
-#define DEF_PKT_QUEUE_VSIZE   50
-  
- typedef enum {  
-    STATE_STOP,  
-    STATE_PLAY,  
-    STATE_PAUSE  
-} PlayerState; 
-
-typedef struct {
-    long       fsize;
-    long       asize;
-    long       vsize;
-    long       fhead;
-    long       ftail;
-    long       ahead;
-    long       atail;
-    long       vhead;
-    long       vtail;
-    long       apktnum;
-    long       vpktnum;
-    sem_t      fsemr;
-    sem_t      asemr;
-    sem_t      asemw;
-    sem_t      vsemr;
-    sem_t      vsemw;
-    AVPacket  *bpkts; // packet buffers
-    AVPacket **fpkts; // free packets
-    AVPacket **apkts; // audio packets
-    AVPacket **vpkts; // video packets
-} PKTQUEUE;
-
-// 内部类型定义
-typedef struct
-{
-    // audio
-    AVFormatContext *pAVFormatContext;
-    AVCodecContext  *pAudioCodecContext;
-    int              iAudioStreamIndex;
-    double           dAudioTimeBase;
-
-    // video
-    AVCodecContext  *pVideoCodecContext;
-    int              iVideoStreamIndex;
-    double           dVideoTimeBase;
-
-    // render
-    int              nRenderMode;
-    void            *hCoreRender;
-
-    // thread
-    #define PS_D_PAUSE  (1 << 0)  // demux pause
-    #define PS_A_PAUSE  (1 << 1)  // audio decoding pause
-    #define PS_V_PAUSE  (1 << 2)  // video decoding pause
-    #define PS_R_PAUSE  (1 << 3)  // rendering pause
-    #define PS_CLOSE    (1 << 4)  // close player
-    int              nPlayerStatus;
-    pthread_t        hAVDemuxThread;
-    pthread_t        hADecodeThread;
-    pthread_t        hVDecodeThread;
-
-    // packet queue
-    PKTQUEUE         PacketQueue;
-} PLAYER;
- 
+/************************************************************************
+* Prototype Declare Section
+************************************************************************/
 void gui_status_update(PlayerState state);  
 void gui_update_time(const gchar *time, const gint64 position, const gint64 length);  
-   
 gboolean load_file(const gchar *uri);  
 void seek_to(gdouble percentage);  
 gboolean play_file();
