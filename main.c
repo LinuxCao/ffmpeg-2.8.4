@@ -82,6 +82,7 @@ static void file_open(GtkAction *action)
         if (load_file(filename))  
 		{
             gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE);  
+
 		}
 	}
 	gtk_widget_destroy(file_chooser);
@@ -133,7 +134,7 @@ static GtkActionEntry mainwindow_action_entries[] = {
         G_CALLBACK(help_about)  
     }  
 };  
-  
+#if 0
 static void play_clicked(GtkWidget *widget, gpointer data)  
 {  
 	g_print("play_clicked\n"); 
@@ -160,7 +161,7 @@ static void pause_clicked(GtkWidget *widget, gpointer data)
 {           
 	g_print("pause_clicked\n"); 
 	g_print("toggle_pause\n");    	
-	toggle_pause(get_videostate_for_gtk());	
+	//toggle_pause(get_videostate_for_gtk());	
 }  
   
 static void stop_clicked(GtkWidget *widget, gpointer data)  
@@ -168,12 +169,50 @@ static void stop_clicked(GtkWidget *widget, gpointer data)
 	g_print("stop_clicked\n");   
 }  
   
+#endif
 /* Handler for user moving seek bar */  
 static void seek_value_changed(GtkRange *range, gpointer data)  
 {  
 	g_print("seek_value_changed\n");     
 }  
   
+  
+void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
+{
+	g_print("toggle_play_pause_button_callback\n"); 
+	if(current_filename)
+	{
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))//play
+		{
+			g_print("GTK_STOCK_MEDIA_PLAY\n");   
+			//使用内置的图标创建图像
+			GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+			//动态设置按钮的图像
+			gtk_button_set_image(GTK_TOGGLE_BUTTON(widget),img);
+			gtk_widget_show(GTK_TOGGLE_BUTTON(widget));
+
+			//ffplay pause
+			toggle_pause(get_videostate_for_gtk());	
+		} 
+		else //pause
+		{
+			g_print("GTK_STOCK_MEDIA_PAUSE\n");   
+			//使用内置的图标创建图像
+			GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
+			//动态设置按钮的图像
+			gtk_button_set_image(GTK_TOGGLE_BUTTON(widget),img);
+			gtk_widget_show(GTK_TOGGLE_BUTTON(widget));
+
+			//ffplay play
+			toggle_pause(get_videostate_for_gtk());	
+		}
+	}
+	else
+	{
+		g_print("please choose open video file.\n"); 
+	}
+}
+
 GtkWidget *build_gui()  
 {  
     GtkWidget *main_vbox;  
@@ -237,27 +276,33 @@ GtkWidget *build_gui()
     controls_hbox = gtk_hbox_new(TRUE, 6);  
     gtk_box_pack_start_defaults(GTK_BOX(main_vbox), controls_hbox);  
   
-    // 播放按钮  
-    play_button = gtk_button_new_from_stock(GTK_STOCK_MEDIA_PLAY);  
+    // 播放按钮 暂停按钮
+    play_button = gtk_toggle_button_new();  
+	GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_TOGGLE_BUTTON(play_button),img);
     // 设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
-    gtk_widget_set_sensitive(play_button, FALSE);  
-    g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(play_clicked), NULL);  
+    gtk_widget_set_sensitive(play_button, FALSE);
+	//默认是处于播放toggle,用户再点一下就是暂停toggle
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(play_button),TRUE);
+    g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
     gtk_box_pack_start_defaults(GTK_BOX(controls_hbox), play_button);  
-      
+	
+#if 0 
     // 暂停按钮,为使按下时停留在按下状态，使用GtkToggleButton  
     pause_button = gtk_toggle_button_new_with_label(GTK_STOCK_MEDIA_PAUSE);  
     // 将按钮设置为固化按钮  
     gtk_button_set_use_stock(GTK_BUTTON(pause_button), TRUE);  
     gtk_widget_set_sensitive(pause_button, FALSE);  
-    g_signal_connect(G_OBJECT(pause_button), "clicked", G_CALLBACK(pause_clicked), NULL);  
+    g_signal_connect(G_OBJECT(pause_button), "clicked", G_CALLBACK(toggle_button_callback), NULL);  
     gtk_box_pack_start_defaults(GTK_BOX(controls_hbox), pause_button);  
-  
+
     // 停止按钮  
     stop_button = gtk_button_new_from_stock(GTK_STOCK_MEDIA_STOP);  
     gtk_widget_set_sensitive(stop_button, FALSE);  
     g_signal_connect(G_OBJECT(stop_button), "clicked", G_CALLBACK(stop_clicked), NULL);  
     gtk_box_pack_start_defaults(GTK_BOX(controls_hbox), stop_button);       
-      
+ #endif     
     // status_hbox  
     status_hbox = gtk_hbox_new(TRUE, 0);  
     gtk_box_pack_start(GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);  
