@@ -44,6 +44,7 @@ static GtkWidget *play_button;   //播放暂停按钮
 static GtkWidget *rewind_button;  //快退按钮
 static GtkWidget *forward_button; //快进按钮
 static GtkWidget *fullscreen_button; //全屏按钮
+static GtkWidget *voice_slience_button; //静音按钮
 
 static char *current_filename = NULL;  
 
@@ -90,7 +91,8 @@ static void file_open(GtkAction *action)
             gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
 			gtk_widget_set_sensitive(GTK_WIDGET(rewind_button), TRUE); 
 			gtk_widget_set_sensitive(GTK_WIDGET(forward_button), TRUE); 
-			gtk_widget_set_sensitive(GTK_WIDGET(fullscreen_button), TRUE);  	 			
+			gtk_widget_set_sensitive(GTK_WIDGET(fullscreen_button), TRUE); 
+			gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  			
 
 		}
 	}
@@ -242,6 +244,45 @@ void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 	g_print("toggle_fullscreen_button_callback\n"); 
 }
 
+void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
+{
+	g_print("toggle_voice_slience_button_callback\n"); 
+	if(current_filename)
+	{
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))//voice
+		{
+			g_print("voice\n");   
+			//使用内置的图标创建图像
+			//GtkWidget* img_play = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+			//使用指定图标创建按钮图像
+			GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
+			//动态设置按钮的图像
+			gtk_button_set_image(GTK_BUTTON(widget),img_voice);
+			gtk_widget_show(widget);
+
+			//ffplay pause
+			//toggle_pause(get_videostate_for_gtk());	
+		} 
+		else //slience
+		{
+			g_print("slience\n");   
+			//使用内置的图标创建图像
+			//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
+			//使用指定图标创建按钮图像
+			GtkWidget* img_slience= gtk_image_new_from_file("slience.png");
+			//动态设置按钮的图像
+			gtk_button_set_image(GTK_BUTTON(widget),img_slience);
+			gtk_widget_show(widget);
+
+			//ffplay play
+			//toggle_pause(get_videostate_for_gtk());	
+		}
+	}
+	else
+	{
+		g_print("please choose open video file.\n"); 
+	}
+}
 
 GtkWidget *build_gui()  
 {  
@@ -394,6 +435,20 @@ GtkWidget *build_gui()
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(forward_button),TRUE);
     g_signal_connect(G_OBJECT(forward_button), "clicked", G_CALLBACK(toggle_forward_button_callback), NULL);  
 	gtk_box_pack_start(GTK_BOX(status_hbox), forward_button, FALSE, FALSE, 0);
+	
+	//静音按钮
+    voice_slience_button = gtk_toggle_button_new();  
+	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+	GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_BUTTON(voice_slience_button),img_voice);
+    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
+    gtk_widget_set_sensitive(voice_slience_button, FALSE);
+	//默认是处于音量toggle,用户再点一下就是静音
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(voice_slience_button),TRUE);
+    g_signal_connect(G_OBJECT(voice_slience_button), "clicked", G_CALLBACK(toggle_voice_slience_button_callback), NULL);  
+	gtk_box_pack_start(GTK_BOX(status_hbox), voice_slience_button, FALSE, FALSE, 0);
+	
 	
 	//全屏按钮
     fullscreen_button = gtk_toggle_button_new();  
