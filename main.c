@@ -47,7 +47,7 @@ pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
 * Function Define Section
 ************************************************************************/
  // 函数实现
-void *playeropen_thread(const char *file)
+void *playeropen_thread(char *file)
 {
 	g_print("playeropen_thread start\n"); 
 	char *pfile[2];
@@ -188,8 +188,8 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 			//使用内置的图标创建图像
 			GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
 			//动态设置按钮的图像
-			gtk_button_set_image(GTK_TOGGLE_BUTTON(widget),img);
-			gtk_widget_show(GTK_TOGGLE_BUTTON(widget));
+			gtk_button_set_image(GTK_BUTTON(widget),img);
+			gtk_widget_show(widget);
 
 			//ffplay pause
 			toggle_pause(get_videostate_for_gtk());	
@@ -200,8 +200,8 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 			//使用内置的图标创建图像
 			GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
 			//动态设置按钮的图像
-			gtk_button_set_image(GTK_TOGGLE_BUTTON(widget),img);
-			gtk_widget_show(GTK_TOGGLE_BUTTON(widget));
+			gtk_button_set_image(GTK_BUTTON(widget),img);
+			gtk_widget_show(widget);
 
 			//ffplay play
 			toggle_pause(get_videostate_for_gtk());	
@@ -280,7 +280,7 @@ GtkWidget *build_gui()
     play_button = gtk_toggle_button_new();  
 	GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
 	//动态设置按钮的图像
-	gtk_button_set_image(GTK_TOGGLE_BUTTON(play_button),img);
+	gtk_button_set_image(GTK_BUTTON(play_button),img);
     // 设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
     gtk_widget_set_sensitive(play_button, FALSE);
 	//默认是处于播放toggle,用户再点一下就是暂停toggle
@@ -370,7 +370,7 @@ static gboolean build_gstreamer_pipeline(const gchar *uri)
 */
 
 // load file to play  
-gboolean load_file(const gchar *uri)  
+gboolean load_file(gchar *uri)  
 {  
 	g_print("load_file\n"); 
 	//g_idle_add((GSourceFunc)playeropen,uri);
@@ -382,6 +382,9 @@ gboolean load_file(const gchar *uri)
         printf("can't create thread: %s\n", strerror(err));
 	else
 		printf("playeropen_thread pthread_create success\n");
+	
+	//父线程调用pthread_detach(thread_id)（非阻塞，可立即返回）
+	//这将该子线程的状态设置为分离的（detached），如此一来，该线程运行结束后会自动释放所有资源。
 	pthread_detach(playeropen_msg_process_thread_tid);
 	
 	return TRUE;
@@ -405,7 +408,7 @@ void seek_to(gdouble percentage)
 	g_print("seek_to\n");  
 }  
   
-int main(int argc, char **argv[])  
+int main(int argc, char *argv[])  
 {  
 
 	int i=0;
@@ -426,6 +429,7 @@ int main(int argc, char **argv[])
     g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(destroy), NULL);  
     // 创建主窗口GUI  
     gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
+	
     // 显示  
     gtk_widget_show_all(GTK_WIDGET(main_window));    
 
