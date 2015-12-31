@@ -408,6 +408,7 @@ void seek_to(gdouble percentage)
 	g_print("seek_to\n");  
 }  
   
+  
 int main(int argc, char *argv[])  
 {  
 
@@ -430,10 +431,20 @@ int main(int argc, char *argv[])
     // 创建主窗口GUI  
     gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
 	
+	
     // 显示  
     gtk_widget_show_all(GTK_WIDGET(main_window));    
 
 	g_thread_init (NULL);
+	
+	//SDL播放画面嵌入到GTK窗口,切记务必要在整个界面show之后再去获取GTK窗口ID
+	//在GtkWidget没有show出来之前是没有XID（window ID）的。
+	char SDL_windowhack[32];
+	//获取GTK视频显示窗口ID,并格式化字符串SDL_windowhack 
+	sprintf(SDL_windowhack, "SDL_WINDOWID=%ld", GDK_WINDOW_XID(video_output->window));
+	g_print("SDL_WINDOWID:=0x%1x\n",GDK_WINDOW_XID(video_output->window)); 
+	//设置SDL显示窗口环境变量
+	putenv(SDL_windowhack);
 	
     // 开始主循环  
     gtk_main();  
