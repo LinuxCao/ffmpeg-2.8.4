@@ -271,7 +271,8 @@ GtkWidget *build_gui()
     gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_DISCONTINUOUS);  
     g_signal_connect(G_OBJECT(seek_scale), "value-changed", G_CALLBACK(seek_value_changed), NULL);  
     gtk_box_pack_start(GTK_BOX(main_vbox), seek_scale, FALSE, FALSE, 0);  
-  
+	
+#if 0 
     // controls_hbox  
     controls_hbox = gtk_hbox_new(TRUE, 6);  
     gtk_box_pack_start_defaults(GTK_BOX(main_vbox), controls_hbox);  
@@ -288,7 +289,7 @@ GtkWidget *build_gui()
     g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
     gtk_box_pack_start_defaults(GTK_BOX(controls_hbox), play_button);  
 	
-#if 0 
+
     // 暂停按钮,为使按下时停留在按下状态，使用GtkToggleButton  
     pause_button = gtk_toggle_button_new_with_label(GTK_STOCK_MEDIA_PAUSE);  
     // 将按钮设置为固化按钮  
@@ -302,7 +303,7 @@ GtkWidget *build_gui()
     gtk_widget_set_sensitive(stop_button, FALSE);  
     g_signal_connect(G_OBJECT(stop_button), "clicked", G_CALLBACK(stop_clicked), NULL);  
     gtk_box_pack_start_defaults(GTK_BOX(controls_hbox), stop_button);       
- #endif     
+   
     // status_hbox  
     status_hbox = gtk_hbox_new(TRUE, 0);  
     gtk_box_pack_start(GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);  
@@ -315,7 +316,28 @@ GtkWidget *build_gui()
     time_label = gtk_label_new("00:00:00");  
     gtk_misc_set_alignment(GTK_MISC(time_label), 0.5, 1.0);  
     gtk_box_pack_start(GTK_BOX(status_hbox), time_label, TRUE, TRUE, 0);  
-     
+#endif
+	// status_hbox  
+    status_hbox = gtk_hbox_new(FALSE, 10);  
+    gtk_box_pack_start(GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);  
+	
+	//时间标签     
+    time_label = gtk_label_new("00:00:00");  
+    gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
+    gtk_box_pack_start(GTK_BOX(status_hbox), time_label, FALSE, FALSE, 0);  
+	
+	//播放/暂停按钮
+    play_button = gtk_toggle_button_new();  
+	GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_BUTTON(play_button),img);
+    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
+    gtk_widget_set_sensitive(play_button, FALSE);
+	//默认是处于播放toggle,用户再点一下就是暂停toggle
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(play_button),TRUE);
+    g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
+	gtk_box_pack_start(GTK_BOX(status_hbox), play_button, FALSE, FALSE, 0);
+
     return main_vbox;  
 }  
   
