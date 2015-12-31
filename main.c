@@ -39,6 +39,11 @@ static GtkWidget *status_label;
 static GtkWidget *time_label;  
 static GtkWidget *seek_scale;  
 static GtkWidget *video_output;  
+
+static GtkWidget *play_button;   //播放暂停按钮
+static GtkWidget *rewind_button;  //快退按钮
+static GtkWidget *forward_button; //快进按钮
+
 static char *current_filename = NULL;  
 
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
@@ -81,7 +86,9 @@ static void file_open(GtkAction *action)
 		//load file 
         if (load_file(filename))  
 		{
-            gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE);  
+            gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
+			gtk_widget_set_sensitive(GTK_WIDGET(rewind_button), TRUE); 
+			gtk_widget_set_sensitive(GTK_WIDGET(forward_button), TRUE);  	 			
 
 		}
 	}
@@ -213,12 +220,23 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 	}
 }
 
+void toggle_rewind_button_callback (GtkWidget *widget, gpointer data)
+{
+	g_print("toggle_rewind_button_callback\n"); 
+}
+
+
+void toggle_forward_button_callback (GtkWidget *widget, gpointer data)
+{
+	g_print("toggle_forward_button_callback\n"); 
+}
+
 GtkWidget *build_gui()  
 {  
     GtkWidget *main_vbox;  
     GtkWidget *status_hbox;  
-    GtkWidget *controls_hbox;  
-   // GtkWidget *saturation_controls_hbox;  
+	//GtkWidget *controls_hbox;  
+    //GtkWidget *saturation_controls_hbox;  
   
     GtkActionGroup *actiongroup;  
     GtkUIManager *ui_manager;  
@@ -326,6 +344,18 @@ GtkWidget *build_gui()
     gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
     gtk_box_pack_start(GTK_BOX(status_hbox), time_label, FALSE, FALSE, 0);  
 	
+	//快退按钮
+    rewind_button = gtk_toggle_button_new();  
+	GtkWidget* img_rewind = gtk_image_new_from_stock(GTK_STOCK_MEDIA_REWIND ,GTK_ICON_SIZE_BUTTON);
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_BUTTON(rewind_button),img_rewind);
+    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
+    gtk_widget_set_sensitive(rewind_button, FALSE);
+	//默认是处于播放toggle,用户再点一下就是暂停toggle
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rewind_button),TRUE);
+    g_signal_connect(G_OBJECT(rewind_button), "clicked", G_CALLBACK(toggle_rewind_button_callback), NULL);  
+	gtk_box_pack_start(GTK_BOX(status_hbox), rewind_button, FALSE, FALSE, 0);
+	
 	//播放/暂停按钮
     play_button = gtk_toggle_button_new();  
 	GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
@@ -337,6 +367,18 @@ GtkWidget *build_gui()
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(play_button),TRUE);
     g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
 	gtk_box_pack_start(GTK_BOX(status_hbox), play_button, FALSE, FALSE, 0);
+	
+	//快进按钮
+    forward_button = gtk_toggle_button_new();  
+	GtkWidget* img_forward = gtk_image_new_from_stock( GTK_STOCK_MEDIA_FORWARD ,GTK_ICON_SIZE_BUTTON);
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_BUTTON(forward_button),img_forward);
+    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
+    gtk_widget_set_sensitive(forward_button, FALSE);
+	//默认是处于播放toggle,用户再点一下就是暂停toggle
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(forward_button),TRUE);
+    g_signal_connect(G_OBJECT(forward_button), "clicked", G_CALLBACK(toggle_forward_button_callback), NULL);  
+	gtk_box_pack_start(GTK_BOX(status_hbox), forward_button, FALSE, FALSE, 0);
 
     return main_vbox;  
 }  
