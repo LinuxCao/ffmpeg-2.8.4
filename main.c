@@ -371,12 +371,14 @@ static gboolean build_gstreamer_pipeline(const gchar *uri)
 
 // load file to play  
 gboolean load_file(gchar *uri)  
-{  
-	g_print("load_file\n"); 
-	//g_idle_add((GSourceFunc)playeropen,uri);
-	//if(playeropen(uri))
-		
+{ 
+	g_print("load_file\n");  
+	
+	char fn[256],*p;
+	char pathname[256];
 	int err;
+	
+	//创建ffplay播放视频线程
     err = pthread_create(&playeropen_msg_process_thread_tid, NULL, playeropen_thread, uri);
     if (err != 0)
         printf("can't create thread: %s\n", strerror(err));
@@ -386,6 +388,22 @@ gboolean load_file(gchar *uri)
 	//父线程调用pthread_detach(thread_id)（非阻塞，可立即返回）
 	//这将该子线程的状态设置为分离的（detached），如此一来，该线程运行结束后会自动释放所有资源。
 	pthread_detach(playeropen_msg_process_thread_tid);
+	
+	//从路径名中分离文件名
+	//全文件名赋值给pathname
+	strncpy(pathname, uri,256);
+
+	//第2实参这样写以防止文件在当前目录下时因p=NULL而出错
+	strcpy(fn,(p=strrchr(pathname,'/')) ? p+1 : pathname);
+	
+	//打出来看看
+	printf("%s\n",fn);
+	
+	//更新窗口标题为视频文件名 
+    gtk_window_set_title(GTK_WINDOW(main_window),(char *)fn);  
+	
+	//显示  
+    gtk_widget_show_all(GTK_WIDGET(main_window));   
 	
 	return TRUE;
 }  
