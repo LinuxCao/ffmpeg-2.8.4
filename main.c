@@ -195,9 +195,11 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 		{
 			g_print("GTK_STOCK_MEDIA_PLAY\n");   
 			//使用内置的图标创建图像
-			GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+			//GtkWidget* img_play = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+			//使用指定图标创建按钮图像
+			GtkWidget* img_play= gtk_image_new_from_file("play.png");
 			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(widget),img);
+			gtk_button_set_image(GTK_BUTTON(widget),img_play);
 			gtk_widget_show(widget);
 
 			//ffplay pause
@@ -207,9 +209,11 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 		{
 			g_print("GTK_STOCK_MEDIA_PAUSE\n");   
 			//使用内置的图标创建图像
-			GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
+			//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
+			//使用指定图标创建按钮图像
+			GtkWidget* img_pause= gtk_image_new_from_file("pause.png");
 			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(widget),img);
+			gtk_button_set_image(GTK_BUTTON(widget),img_pause);
 			gtk_widget_show(widget);
 
 			//ffplay play
@@ -354,7 +358,8 @@ GtkWidget *build_gui()
 	
 	//快退按钮
     rewind_button = gtk_toggle_button_new();  
-	GtkWidget* img_rewind = gtk_image_new_from_stock(GTK_STOCK_MEDIA_REWIND ,GTK_ICON_SIZE_BUTTON);
+	//GtkWidget* img_rewind = gtk_image_new_from_stock(GTK_STOCK_MEDIA_REWIND ,GTK_ICON_SIZE_BUTTON);
+	GtkWidget* img_rewind = gtk_image_new_from_file("rewind.png");
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(rewind_button),img_rewind);
     //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
@@ -366,9 +371,10 @@ GtkWidget *build_gui()
 	
 	//播放/暂停按钮
     play_button = gtk_toggle_button_new();  
-	GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+	GtkWidget* img_play= gtk_image_new_from_file("play.png");
 	//动态设置按钮的图像
-	gtk_button_set_image(GTK_BUTTON(play_button),img);
+	gtk_button_set_image(GTK_BUTTON(play_button),img_play);
     //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
     gtk_widget_set_sensitive(play_button, FALSE);
 	//默认是处于播放toggle,用户再点一下就是暂停toggle
@@ -378,7 +384,8 @@ GtkWidget *build_gui()
 	
 	//快进按钮
     forward_button = gtk_toggle_button_new();  
-	GtkWidget* img_forward = gtk_image_new_from_stock( GTK_STOCK_MEDIA_FORWARD ,GTK_ICON_SIZE_BUTTON);
+	//GtkWidget* img_forward = gtk_image_new_from_stock( GTK_STOCK_MEDIA_FORWARD ,GTK_ICON_SIZE_BUTTON);
+	GtkWidget* img_forward = gtk_image_new_from_file("forward.png");
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(forward_button),img_forward);
     //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
