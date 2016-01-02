@@ -39,7 +39,7 @@ static GtkWidget *status_label;
 static GtkWidget *time_label;  
 static GtkWidget *seek_scale;  
 static GtkWidget *video_output; 
-//static GtkWidget *voice_scale;  
+static GtkWidget *voice_scale;  
 
 static GtkWidget *play_button;   //播放暂停按钮
 static GtkWidget *rewind_button;  //快退按钮
@@ -189,6 +189,11 @@ static void seek_value_changed(GtkRange *range, gpointer data)
 }  
   
   
+/* Handler for user moving seek bar */  
+static void voice_value_changed(GtkRange *range, gpointer data)  
+{  
+	g_print("voice_value_changed\n");     
+}  
 void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_play_pause_button_callback\n"); 
@@ -288,10 +293,11 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 GtkWidget *build_gui()  
 {  
     GtkWidget *main_vbox;  
-    GtkWidget *status_hbox;  
-	//GtkWidget *controls_hbox;  
-    //GtkWidget *saturation_controls_hbox;
+    GtkWidget *voice_status_hbox;  
+	GtkWidget *play_controls_hbox;   
+    GtkWidget *status_controls_hbox;
 	GtkObject *video_schedule_adj;
+	GtkObject *voice_schedule_adj;
   
     GtkActionGroup *actiongroup;  
     GtkUIManager *ui_manager;  
@@ -341,68 +347,28 @@ GtkWidget *build_gui()
     // 视频进度条控制  
 	/* value, lower, upper, step_increment, page_increment, page_size */
 	/* 注意，page_size值只对滚动条构件有区别，并且，你实际上能取得的最高值是(upper - page_size)。 */
-	video_schedule_adj = gtk_adjustment_new (0.0, 0.0, 101.0, 0.1, 1.0, 1.0);
+	video_schedule_adj = gtk_adjustment_new (0, 0, 101, 1, 1, 1);
 	seek_scale = gtk_hscale_new (GTK_ADJUSTMENT (video_schedule_adj));
-    gtk_scale_set_draw_value(GTK_SCALE(seek_scale), TRUE);  
+    gtk_scale_set_draw_value(GTK_SCALE(seek_scale), TRUE); 
+	gtk_scale_set_digits(GTK_SCALE(seek_scale),0);	
     gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_CONTINUOUS);  
 	gtk_scale_set_value_pos (GTK_SCALE(seek_scale), GTK_POS_LEFT);
 	gtk_range_set_adjustment(GTK_RANGE(seek_scale),GTK_ADJUSTMENT(video_schedule_adj));
     g_signal_connect(G_OBJECT(seek_scale), "value-changed", G_CALLBACK(seek_value_changed), NULL);  
     gtk_box_pack_start(GTK_BOX(main_vbox), seek_scale, FALSE, FALSE, 0);  
 	
-#if 0 
-    // controls_hbox  
-    controls_hbox = gtk_hbox_new(TRUE, 6);  
-    gtk_box_pack_start_defaults(GTK_BOX(main_vbox), controls_hbox);  
-  
-    // 播放按钮 暂停按钮
-    play_button = gtk_toggle_button_new();  
-	GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
-	//动态设置按钮的图像
-	gtk_button_set_image(GTK_BUTTON(play_button),img);
-    // 设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
-    gtk_widget_set_sensitive(play_button, FALSE);
-	//默认是处于播放toggle,用户再点一下就是暂停toggle
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(play_button),TRUE);
-    g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
-    gtk_box_pack_start_defaults(GTK_BOX(controls_hbox), play_button);  
-	
+	// status_controls_hbox  
+    status_controls_hbox = gtk_hbox_new(FALSE, 10);  
+    gtk_box_pack_start(GTK_BOX(main_vbox), status_controls_hbox, FALSE, FALSE, 0);  
 
-    // 暂停按钮,为使按下时停留在按下状态，使用GtkToggleButton  
-    pause_button = gtk_toggle_button_new_with_label(GTK_STOCK_MEDIA_PAUSE);  
-    // 将按钮设置为固化按钮  
-    gtk_button_set_use_stock(GTK_BUTTON(pause_button), TRUE);  
-    gtk_widget_set_sensitive(pause_button, FALSE);  
-    g_signal_connect(G_OBJECT(pause_button), "clicked", G_CALLBACK(toggle_button_callback), NULL);  
-    gtk_box_pack_start_defaults(GTK_BOX(controls_hbox), pause_button);  
-
-    // 停止按钮  
-    stop_button = gtk_button_new_from_stock(GTK_STOCK_MEDIA_STOP);  
-    gtk_widget_set_sensitive(stop_button, FALSE);  
-    g_signal_connect(G_OBJECT(stop_button), "clicked", G_CALLBACK(stop_clicked), NULL);  
-    gtk_box_pack_start_defaults(GTK_BOX(controls_hbox), stop_button);       
-   
-    // status_hbox  
-    status_hbox = gtk_hbox_new(TRUE, 0);  
-    gtk_box_pack_start(GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);  
-    // 状态标签  
-    status_label = gtk_label_new("<b>已停止</b>");  
-    gtk_label_set_use_markup(GTK_LABEL(status_label), TRUE);  
-    gtk_misc_set_alignment(GTK_MISC(status_label), 0.0, 0.5);  
-    gtk_box_pack_start(GTK_BOX(status_hbox), status_label, TRUE, TRUE, 0);  
-    // 时间标签     
-    time_label = gtk_label_new("00:00:00");  
-    gtk_misc_set_alignment(GTK_MISC(time_label), 0.5, 1.0);  
-    gtk_box_pack_start(GTK_BOX(status_hbox), time_label, TRUE, TRUE, 0);  
-#endif
-	// status_hbox  
-    status_hbox = gtk_hbox_new(FALSE, 10);  
-    gtk_box_pack_start(GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);  
+	// play_controls_hbox  
+    play_controls_hbox = gtk_hbox_new(FALSE, 10);  
+    gtk_box_pack_start(GTK_BOX(status_controls_hbox), play_controls_hbox, FALSE, FALSE, 0);  
 	
 	//时间标签     
     time_label = gtk_label_new("00:00:00");  
     gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
-    gtk_box_pack_start(GTK_BOX(status_hbox), time_label, FALSE, FALSE, 0);  
+    gtk_box_pack_start(GTK_BOX(play_controls_hbox), time_label, FALSE, FALSE, 0);  
 	
 	//快退按钮
     rewind_button = gtk_toggle_button_new();  
@@ -415,7 +381,7 @@ GtkWidget *build_gui()
 	//默认是激活状态
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rewind_button),TRUE);
     g_signal_connect(G_OBJECT(rewind_button), "clicked", G_CALLBACK(toggle_rewind_button_callback), NULL);  
-	gtk_box_pack_start(GTK_BOX(status_hbox), rewind_button, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(play_controls_hbox), rewind_button, FALSE, FALSE, 0);
 	
 	//播放/暂停按钮
     play_button = gtk_toggle_button_new();  
@@ -428,7 +394,7 @@ GtkWidget *build_gui()
 	//默认是处于播放toggle,用户再点一下就是暂停toggle
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(play_button),TRUE);
     g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
-	gtk_box_pack_start(GTK_BOX(status_hbox), play_button, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(play_controls_hbox), play_button, FALSE, FALSE, 0);
 	
 	//快进按钮
     forward_button = gtk_toggle_button_new();  
@@ -441,7 +407,11 @@ GtkWidget *build_gui()
 	//默认是激活状态
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(forward_button),TRUE);
     g_signal_connect(G_OBJECT(forward_button), "clicked", G_CALLBACK(toggle_forward_button_callback), NULL);  
-	gtk_box_pack_start(GTK_BOX(status_hbox), forward_button, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(play_controls_hbox), forward_button, FALSE, FALSE, 0);
+	
+	// voice_status_hbox  
+    voice_status_hbox = gtk_hbox_new(FALSE, 10);  
+    gtk_box_pack_end(GTK_BOX(status_controls_hbox), voice_status_hbox, FALSE, FALSE, 0);  
 	
 	//静音按钮
     voice_slience_button = gtk_toggle_button_new();  
@@ -454,7 +424,22 @@ GtkWidget *build_gui()
 	//默认是处于音量toggle,用户再点一下就是静音
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(voice_slience_button),TRUE);
     g_signal_connect(G_OBJECT(voice_slience_button), "clicked", G_CALLBACK(toggle_voice_slience_button_callback), NULL);  
-	gtk_box_pack_start(GTK_BOX(status_hbox), voice_slience_button, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(voice_status_hbox), voice_slience_button, FALSE, FALSE, 0);
+	
+	// 音量进度条控制  
+	/* value, lower, upper, step_increment, page_increment, page_size */
+	/* 注意，page_size值只对滚动条构件有区别，并且，你实际上能取得的最高值是(upper - page_size)。 */
+	voice_schedule_adj = gtk_adjustment_new (0, 0, 101, 1, 1, 1);
+	voice_scale = gtk_hscale_new (GTK_ADJUSTMENT (voice_schedule_adj));
+	gtk_widget_set_size_request (GTK_WIDGET(voice_scale),200,-1);
+    gtk_scale_set_draw_value(GTK_SCALE(voice_scale), TRUE);  
+	gtk_scale_set_digits(GTK_SCALE(voice_scale),0);
+    gtk_range_set_update_policy(GTK_RANGE(voice_scale), GTK_UPDATE_CONTINUOUS);  
+	gtk_scale_set_value_pos (GTK_SCALE(voice_scale), GTK_POS_LEFT);
+	gtk_range_set_adjustment(GTK_RANGE(voice_scale),GTK_ADJUSTMENT(voice_schedule_adj));
+    g_signal_connect(G_OBJECT(voice_scale), "value-changed", G_CALLBACK(voice_value_changed), NULL);  
+    gtk_box_pack_start(GTK_BOX(voice_status_hbox), voice_scale, FALSE, FALSE, 0);  
+	
 	
 	
 	//全屏按钮
@@ -467,7 +452,7 @@ GtkWidget *build_gui()
 	//默认是处于全屏toggle,用户再点一下就是1:1播放
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fullscreen_button),TRUE);
     g_signal_connect(G_OBJECT(fullscreen_button), "clicked", G_CALLBACK(toggle_fullscreen_button_callback), NULL);  
-	gtk_box_pack_end(GTK_BOX(status_hbox), fullscreen_button, FALSE, FALSE, 0);
+	gtk_box_pack_end(GTK_BOX(voice_status_hbox), fullscreen_button, FALSE, FALSE, 0);
 
     return main_vbox;  
 }  
