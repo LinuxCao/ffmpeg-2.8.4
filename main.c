@@ -38,7 +38,8 @@ static GtkWidget *stop_button;
 static GtkWidget *status_label;  
 static GtkWidget *time_label;  
 static GtkWidget *seek_scale;  
-static GtkWidget *video_output;  
+static GtkWidget *video_output; 
+//static GtkWidget *voice_scale;  
 
 static GtkWidget *play_button;   //播放暂停按钮
 static GtkWidget *rewind_button;  //快退按钮
@@ -289,7 +290,8 @@ GtkWidget *build_gui()
     GtkWidget *main_vbox;  
     GtkWidget *status_hbox;  
 	//GtkWidget *controls_hbox;  
-    //GtkWidget *saturation_controls_hbox;  
+    //GtkWidget *saturation_controls_hbox;
+	GtkObject *video_schedule_adj;
   
     GtkActionGroup *actiongroup;  
     GtkUIManager *ui_manager;  
@@ -322,7 +324,7 @@ GtkWidget *build_gui()
   
     // 创建主 GtkVBOx. 其他所有都在它里面  
     // 0：各个构件高度可能不同，6：构件之间的间距为6 像素  
-    main_vbox = gtk_vbox_new(0, 0);  
+    main_vbox = gtk_vbox_new(0, 6);  
   
     // 添加菜单栏  
     gtk_box_pack_start(  
@@ -336,10 +338,15 @@ GtkWidget *build_gui()
     gtk_box_pack_start (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
 
  
-    // 滑动条控制  
-    seek_scale = gtk_hscale_new_with_range(0, 100, 1);  
-    gtk_scale_set_draw_value(GTK_SCALE(seek_scale), FALSE);  
-    gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_DISCONTINUOUS);  
+    // 视频进度条控制  
+	/* value, lower, upper, step_increment, page_increment, page_size */
+	/* 注意，page_size值只对滚动条构件有区别，并且，你实际上能取得的最高值是(upper - page_size)。 */
+	video_schedule_adj = gtk_adjustment_new (0.0, 0.0, 101.0, 0.1, 1.0, 1.0);
+	seek_scale = gtk_hscale_new (GTK_ADJUSTMENT (video_schedule_adj));
+    gtk_scale_set_draw_value(GTK_SCALE(seek_scale), TRUE);  
+    gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_CONTINUOUS);  
+	gtk_scale_set_value_pos (GTK_SCALE(seek_scale), GTK_POS_LEFT);
+	gtk_range_set_adjustment(GTK_RANGE(seek_scale),GTK_ADJUSTMENT(video_schedule_adj));
     g_signal_connect(G_OBJECT(seek_scale), "value-changed", G_CALLBACK(seek_value_changed), NULL);  
     gtk_box_pack_start(GTK_BOX(main_vbox), seek_scale, FALSE, FALSE, 0);  
 	
@@ -461,7 +468,6 @@ GtkWidget *build_gui()
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fullscreen_button),TRUE);
     g_signal_connect(G_OBJECT(fullscreen_button), "clicked", G_CALLBACK(toggle_fullscreen_button_callback), NULL);  
 	gtk_box_pack_end(GTK_BOX(status_hbox), fullscreen_button, FALSE, FALSE, 0);
-
 
     return main_vbox;  
 }  
