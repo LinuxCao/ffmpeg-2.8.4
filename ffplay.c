@@ -3205,6 +3205,7 @@ static void event_loop(VideoState *cur_stream)
                 break;
             }
         case SDL_MOUSEMOTION:
+			printf("SDL_MOUSEMOTION\n");
             if (cursor_hidden) {
                 SDL_ShowCursor(1);
                 cursor_hidden = 0;
@@ -3239,6 +3240,7 @@ static void event_loop(VideoState *cur_stream)
                     ts = frac * cur_stream->ic->duration;
                     if (cur_stream->ic->start_time != AV_NOPTS_VALUE)
                         ts += cur_stream->ic->start_time;
+					printf("ts=%ld\n",ts);
                     stream_seek(cur_stream, ts, 0, 0);
                 }
             break;

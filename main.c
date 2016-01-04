@@ -47,6 +47,9 @@ static GtkWidget *forward_button; //快进按钮
 static GtkWidget *fullscreen_button; //全屏按钮
 static GtkWidget *voice_slience_button; //静音按钮
 
+#define XSIZE 1280
+#define YSIZE 720
+
 static char *current_filename = NULL;  
 
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
@@ -66,6 +69,7 @@ void *playeropen_thread(char *file)
 	printf("pfile[1]:%s\n",pfile[1]);
 	//playeropen_msg_process_thread
 	ffplay_init(2,pfile);
+	
 }
 
 // 打开文件  
@@ -182,6 +186,8 @@ static void stop_clicked(GtkWidget *widget, gpointer data)
 }  
   
 #endif
+
+
 /* Handler for user moving seek bar */  
 static void seek_value_changed(GtkRange *range, gpointer data)  
 {  
@@ -265,9 +271,12 @@ void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_fullscreen_button_callback\n"); 
 	SDL_Event sdlevent;
-	sdlevent.type = SDL_KEYDOWN;
-	sdlevent.key.keysym.sym = SDLK_f;
+	sdlevent.type = SDL_VIDEORESIZE;
+	sdlevent.resize.w=XSIZE;
+	sdlevent.resize.h=YSIZE;
+	gtk_widget_set_size_request (GTK_WIDGET (video_output), XSIZE, YSIZE);
 	SDL_PushEvent(&sdlevent);
+	gtk_widget_show(GTK_WIDGET (video_output));
 }
 
 void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
@@ -556,6 +565,7 @@ gboolean load_file(gchar *uri)
 	//更新窗口标题为视频文件名 
     gtk_window_set_title(GTK_WINDOW(main_window),(char *)fn);  
 	
+	
 	//显示  
     gtk_widget_show_all(GTK_WIDGET(main_window));   
 	
@@ -594,6 +604,9 @@ int main(int argc, char *argv[])
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);  
     // 设置窗口标题  
     gtk_window_set_title(GTK_WINDOW(main_window), "FFMPEG Player");  
+	
+	//用户可以自动调整窗口大小
+	gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);
     // 主窗口销毁句柄  
     g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(destroy), NULL);  
     // 创建主窗口GUI  
