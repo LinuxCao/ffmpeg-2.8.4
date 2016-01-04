@@ -3036,6 +3036,7 @@ static void toggle_audio_display(VideoState *is)
 }
 
 static void refresh_loop_wait_event(VideoState *is, SDL_Event *event) {
+	printf("refresh_loop_wait_event\n");
     double remaining_time = 0.0;
     SDL_PumpEvents();
     while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_ALLEVENTS)) {
@@ -3100,11 +3101,13 @@ static void event_loop(VideoState *cur_stream)
                 do_exit(cur_stream);
                 break;
             case SDLK_f:
+			    printf("SDLK_f\n");
                 toggle_full_screen(cur_stream);
                 cur_stream->force_refresh = 1;
                 break;
             case SDLK_p:
             case SDLK_SPACE:
+			    printf("SDLK_SPACE\n");
                 toggle_pause(cur_stream);
                 break;
             case SDLK_s: // S: Step to next frame
@@ -3152,9 +3155,11 @@ static void event_loop(VideoState *cur_stream)
                 seek_chapter(cur_stream, -1);
                 break;
             case SDLK_LEFT:
+				printf("SDLK_LEFT\n");
                 incr = -10.0;
                 goto do_seek;
             case SDLK_RIGHT:
+				printf("SDLK_RIGHT\n");
                 incr = 10.0;
                 goto do_seek;
             case SDLK_UP:

@@ -209,9 +209,12 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 			//动态设置按钮的图像
 			gtk_button_set_image(GTK_BUTTON(widget),img_play);
 			gtk_widget_show(widget);
-
+			
 			//ffplay pause
-			toggle_pause(get_videostate_for_gtk());	
+			SDL_Event sdlevent;
+			sdlevent.type = SDL_KEYDOWN;
+			sdlevent.key.keysym.sym = SDLK_SPACE;
+			SDL_PushEvent(&sdlevent);
 		} 
 		else //pause
 		{
@@ -225,7 +228,10 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 			gtk_widget_show(widget);
 
 			//ffplay play
-			toggle_pause(get_videostate_for_gtk());	
+			SDL_Event sdlevent;
+			sdlevent.type = SDL_KEYDOWN;
+			sdlevent.key.keysym.sym = SDLK_SPACE;
+			SDL_PushEvent(&sdlevent);
 		}
 	}
 	else
@@ -238,8 +244,10 @@ void toggle_rewind_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_rewind_button_callback\n"); 
 	//快退 10 秒
-	double incr = -10.0;
-	do_seek(incr);
+	SDL_Event sdlevent;
+	sdlevent.type = SDL_KEYDOWN;
+	sdlevent.key.keysym.sym = SDLK_LEFT;
+	SDL_PushEvent(&sdlevent);
 }
 
 
@@ -247,13 +255,19 @@ void toggle_forward_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_forward_button_callback\n"); 
 	//快进 10 秒
-	double incr = 10.0;
-	do_seek(incr);
+	SDL_Event sdlevent;
+	sdlevent.type = SDL_KEYDOWN;
+	sdlevent.key.keysym.sym = SDLK_RIGHT;
+	SDL_PushEvent(&sdlevent);
 }
 
 void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_fullscreen_button_callback\n"); 
+	SDL_Event sdlevent;
+	sdlevent.type = SDL_KEYDOWN;
+	sdlevent.key.keysym.sym = SDLK_f;
+	SDL_PushEvent(&sdlevent);
 }
 
 void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
@@ -272,8 +286,6 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 			gtk_button_set_image(GTK_BUTTON(widget),img_voice);
 			gtk_widget_show(widget);
 
-			//ffplay pause
-			//toggle_pause(get_videostate_for_gtk());	
 		} 
 		else //slience
 		{
@@ -286,55 +298,11 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 			gtk_button_set_image(GTK_BUTTON(widget),img_slience);
 			gtk_widget_show(widget);
 
-			//ffplay play
-			//toggle_pause(get_videostate_for_gtk());	
 		}
 	}
 	else
 	{
 		g_print("please choose open video file.\n"); 
-	}
-}
-
-void do_seek(double pincr)  
-{  
-	g_print("do_seek\n");  
-	double incr, pos;
-	incr=pincr;
-	pos=0;
-	VideoState *cur_stream;
-	cur_stream=get_videostate_for_gtk();
-	printf("pos=%lf,incr=%lf,seek_by_bytes=%d\n",pos,incr,get_seek_by_bytes_for_gtk());
-	if (get_seek_by_bytes_for_gtk())
-	{
-		pos = -1;
-		if (pos < 0 && cur_stream->video_stream >= 0)
-		pos = frame_queue_last_pos(&cur_stream->pictq);
-		if (pos < 0 && cur_stream->audio_stream >= 0)
-		pos = frame_queue_last_pos(&cur_stream->sampq);
-		if (pos < 0)
-		pos = avio_tell(cur_stream->ic->pb);
-		if (cur_stream->ic->bit_rate)
-		incr *= cur_stream->ic->bit_rate / 8.0;
-		else
-		incr *= 180000.0;
-		pos += incr;
-		printf("pos=%lf,incr=%lf,seek_by_bytes=%d\n",pos,incr,get_seek_by_bytes_for_gtk());
-		stream_seek(cur_stream, pos, incr, 1);
-	}
-	else 
-	{
-		pos = get_master_clock(cur_stream);
-		if (isnan(pos))
-		{
-			printf("isnan(pos)==true");
-			pos = (double)cur_stream->seek_pos / AV_TIME_BASE;
-		}
-		pos += incr;
-		if (cur_stream->ic->start_time != AV_NOPTS_VALUE && pos < cur_stream->ic->start_time / (double)AV_TIME_BASE)
-		pos = cur_stream->ic->start_time / (double)AV_TIME_BASE;
-		printf("pos=%lf,incr=%lf,seek_by_bytes=%d\n",pos,incr,get_seek_by_bytes_for_gtk());
-		stream_seek(cur_stream, (int64_t)(pos * AV_TIME_BASE), (int64_t)(incr * AV_TIME_BASE), 0);
 	}
 }
 
