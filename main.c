@@ -46,6 +46,7 @@ static GtkWidget *rewind_button;  //快退按钮
 static GtkWidget *forward_button; //快进按钮
 static GtkWidget *fullscreen_button; //全屏按钮
 static GtkWidget *voice_slience_button; //静音按钮
+GtkObject *video_schedule_adj;//video  schedule adjustment
 
 #define XSIZE 1280
 #define YSIZE 720
@@ -150,55 +151,57 @@ static GtkActionEntry mainwindow_action_entries[] = {
         G_CALLBACK(help_about)  
     }  
 };  
-#if 0
-static void play_clicked(GtkWidget *widget, gpointer data)  
-{  
-	g_print("play_clicked\n"); 
 
-	if (current_filename) 
-	{  
-		if (play_file())
-		{  
-			gtk_widget_set_sensitive(GTK_WIDGET(stop_button), TRUE);  
-			gtk_widget_set_sensitive(GTK_WIDGET(pause_button), TRUE);  
-			//gtk_widget_set_sensitive(GTK_WIDGET(play_button), FALSE); 
-			g_print("gui_status_update(STATE_PLAY)\n");    
-			gui_status_update(STATE_PLAY);  
-			g_print("Play success\n");    
-		}  
-		else 
-		{  
-			g_print("Failed to play\n");  
-		}  
-	}  
-}  
-  
-static void pause_clicked(GtkWidget *widget, gpointer data)  
-{           
-	g_print("pause_clicked\n"); 
-	g_print("toggle_pause\n");    	
-	//toggle_pause(get_videostate_for_gtk());	
-}  
-  
-static void stop_clicked(GtkWidget *widget, gpointer data)  
-{        
-	g_print("stop_clicked\n");   
-}  
-  
-#endif
-
+void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
+{
+	g_print("toggle_fullscreen_button_callback\n"); 
+	SDL_Event sdlevent;
+	sdlevent.type = SDL_VIDEORESIZE;
+	sdlevent.resize.w=XSIZE;
+	sdlevent.resize.h=YSIZE;
+	gtk_widget_set_size_request (GTK_WIDGET (video_output), XSIZE, YSIZE);
+	SDL_PushEvent(&sdlevent);
+	gtk_widget_show(GTK_WIDGET (video_output));
+}
 
 /* Handler for user moving seek bar */  
-static void seek_value_changed(GtkRange *range, gpointer data)  
+static void video_seek_value_changed(GtkRange *range, gpointer data)  
 {  
-	g_print("seek_value_changed\n");     
+	g_print("video_seek_value_changed\n");    
+	int64_t ts;
+	int ns, hh, mm, ss;
+	int tns, thh, tmm, tss;
+	double x=0.0,frac=0.0,frac1=0.0;
+	VideoState* cur_stream;
+	x= gtk_adjustment_get_value(GTK_ADJUSTMENT (video_schedule_adj));
+	cur_stream=get_videostate_for_gtk();
+	tns  = cur_stream->ic->duration / 1000000LL;
+	thh  = tns / 3600;
+	tmm  = (tns % 3600) / 60;
+	tss  = (tns % 60);
+	//frac = x / cur_stream->width;
+	frac1 = cur_stream->width / 100.0;
+	frac = (x*frac1) /cur_stream->width;
+	printf("x=%f,cur_stream->width=%d,frac=%f,frac1=%f\n",x,cur_stream->width,frac,frac1);
+	ns   = frac * tns;
+	hh   = ns / 3600;
+	mm   = (ns % 3600) / 60;
+	ss   = (ns % 60);
+	av_log(NULL, AV_LOG_INFO,
+	   "Seek to %2.0f%% (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)\n", frac*100,
+		hh, mm, ss, thh, tmm, tss);
+	ts = frac * cur_stream->ic->duration;
+	if (cur_stream->ic->start_time != AV_NOPTS_VALUE)
+	ts += cur_stream->ic->start_time;
+	//printf("ts=%ld\n",ts);
+	stream_seek(cur_stream, ts, 0, 0);	
 }  
   
   
-/* Handler for user moving seek bar */  
-static void voice_value_changed(GtkRange *range, gpointer data)  
+/* Handler for user moving voice_value bar */  
+static void voice_seek_value_changed(GtkRange *range, gpointer data)  
 {  
-	g_print("voice_value_changed\n");     
+	g_print("voice_seek_value_changed\n");     
 }  
 void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 {
@@ -221,6 +224,10 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 			sdlevent.type = SDL_KEYDOWN;
 			sdlevent.key.keysym.sym = SDLK_SPACE;
 			SDL_PushEvent(&sdlevent);
+			
+			//refresh fullscreen
+			//toggle_fullscreen_button_callback (GTK_WIDGET (video_output), NULL);
+			
 		} 
 		else //pause
 		{
@@ -238,6 +245,9 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 			sdlevent.type = SDL_KEYDOWN;
 			sdlevent.key.keysym.sym = SDLK_SPACE;
 			SDL_PushEvent(&sdlevent);
+			
+			//refresh fullscreen
+			//toggle_fullscreen_button_callback (GTK_WIDGET (video_output), NULL);
 		}
 	}
 	else
@@ -267,17 +277,7 @@ void toggle_forward_button_callback (GtkWidget *widget, gpointer data)
 	SDL_PushEvent(&sdlevent);
 }
 
-void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
-{
-	g_print("toggle_fullscreen_button_callback\n"); 
-	SDL_Event sdlevent;
-	sdlevent.type = SDL_VIDEORESIZE;
-	sdlevent.resize.w=XSIZE;
-	sdlevent.resize.h=YSIZE;
-	gtk_widget_set_size_request (GTK_WIDGET (video_output), XSIZE, YSIZE);
-	SDL_PushEvent(&sdlevent);
-	gtk_widget_show(GTK_WIDGET (video_output));
-}
+
 
 void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 {
@@ -321,7 +321,6 @@ GtkWidget *build_gui()
     GtkWidget *voice_status_hbox;  
 	GtkWidget *play_controls_hbox;   
     GtkWidget *status_controls_hbox;
-	GtkObject *video_schedule_adj;
 	GtkObject *voice_schedule_adj;
   
     GtkActionGroup *actiongroup;  
@@ -379,7 +378,7 @@ GtkWidget *build_gui()
     gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_CONTINUOUS);  
 	gtk_scale_set_value_pos (GTK_SCALE(seek_scale), GTK_POS_LEFT);
 	gtk_range_set_adjustment(GTK_RANGE(seek_scale),GTK_ADJUSTMENT(video_schedule_adj));
-    g_signal_connect(G_OBJECT(seek_scale), "value-changed", G_CALLBACK(seek_value_changed), NULL);  
+    g_signal_connect(G_OBJECT(seek_scale), "value-changed", G_CALLBACK(video_seek_value_changed), NULL);  
     gtk_box_pack_start(GTK_BOX(main_vbox), seek_scale, FALSE, FALSE, 0);  
 	
 	// status_controls_hbox  
@@ -462,7 +461,7 @@ GtkWidget *build_gui()
     gtk_range_set_update_policy(GTK_RANGE(voice_scale), GTK_UPDATE_CONTINUOUS);  
 	gtk_scale_set_value_pos (GTK_SCALE(voice_scale), GTK_POS_LEFT);
 	gtk_range_set_adjustment(GTK_RANGE(voice_scale),GTK_ADJUSTMENT(voice_schedule_adj));
-    g_signal_connect(G_OBJECT(voice_scale), "value-changed", G_CALLBACK(voice_value_changed), NULL);  
+    g_signal_connect(G_OBJECT(voice_scale), "value-changed", G_CALLBACK(voice_seek_value_changed), NULL);  
     gtk_box_pack_start(GTK_BOX(voice_status_hbox), voice_scale, FALSE, FALSE, 0);  
 	
 	
