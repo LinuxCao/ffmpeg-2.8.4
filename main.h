@@ -52,5 +52,7 @@ void gui_update_time(const gchar *time, const gint64 position, const gint64 leng
 gboolean load_file(gchar *uri); 
 void seek_to(gdouble percentage);  
 gboolean play_file();
+
+void do_seek(double pincr);
   
 #endif 

@@ -134,7 +134,17 @@ void set_videostate_for_gtk(VideoState  *status)
 {
 	videostate_for_gtk = status;
 }
+//Get seek_by_bytes
+int get_seek_by_bytes_for_gtk()
+{
+	return seek_by_bytes;
+}
 
+//Set seek_by_bytes
+void set_seek_by_bytes_for_gtk(int value)
+{
+	seek_by_bytes = value;
+}
 
 
 #if CONFIG_AVFILTER
@@ -544,7 +554,7 @@ static int frame_queue_nb_remaining(FrameQueue *f)
 }
 
 /* return last shown position */
-static int64_t frame_queue_last_pos(FrameQueue *f)
+int64_t frame_queue_last_pos(FrameQueue *f)
 {
     Frame *fp = &f->queue[f->rindex];
     if (f->rindex_shown && fp->serial == f->pktq->serial)
@@ -1063,7 +1073,7 @@ static int get_master_sync_type(VideoState *is) {
 }
 
 /* get the current master clock value */
-static double get_master_clock(VideoState *is)
+double get_master_clock(VideoState *is)
 {
     double val;
 
@@ -1096,7 +1106,7 @@ static void check_external_clock_speed(VideoState *is) {
 }
 
 /* seek in the stream */
-static void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes)
+void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes)
 {
     if (!is->seek_req) {
         is->seek_pos = pos;
@@ -2620,7 +2630,10 @@ static int read_thread(void *arg)
         ic->pb->eof_reached = 0; // FIXME hack, ffplay maybe should not use avio_feof() to test for the end
 
     if (seek_by_bytes < 0)
+	{
         seek_by_bytes = !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
+		set_seek_by_bytes_for_gtk(seek_by_bytes);
+	}
 
     is->max_frame_duration = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
 

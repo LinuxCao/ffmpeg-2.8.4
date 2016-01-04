@@ -237,12 +237,18 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 void toggle_rewind_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_rewind_button_callback\n"); 
+	//快退 10 秒
+	double incr = -10.0;
+	do_seek(incr);
 }
 
 
 void toggle_forward_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_forward_button_callback\n"); 
+	//快进 10 秒
+	double incr = 10.0;
+	do_seek(incr);
 }
 
 void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
@@ -287,6 +293,48 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 	else
 	{
 		g_print("please choose open video file.\n"); 
+	}
+}
+
+void do_seek(double pincr)  
+{  
+	g_print("do_seek\n");  
+	double incr, pos;
+	incr=pincr;
+	pos=0;
+	VideoState *cur_stream;
+	cur_stream=get_videostate_for_gtk();
+	printf("pos=%lf,incr=%lf,seek_by_bytes=%d\n",pos,incr,get_seek_by_bytes_for_gtk());
+	if (get_seek_by_bytes_for_gtk())
+	{
+		pos = -1;
+		if (pos < 0 && cur_stream->video_stream >= 0)
+		pos = frame_queue_last_pos(&cur_stream->pictq);
+		if (pos < 0 && cur_stream->audio_stream >= 0)
+		pos = frame_queue_last_pos(&cur_stream->sampq);
+		if (pos < 0)
+		pos = avio_tell(cur_stream->ic->pb);
+		if (cur_stream->ic->bit_rate)
+		incr *= cur_stream->ic->bit_rate / 8.0;
+		else
+		incr *= 180000.0;
+		pos += incr;
+		printf("pos=%lf,incr=%lf,seek_by_bytes=%d\n",pos,incr,get_seek_by_bytes_for_gtk());
+		stream_seek(cur_stream, pos, incr, 1);
+	}
+	else 
+	{
+		pos = get_master_clock(cur_stream);
+		if (isnan(pos))
+		{
+			printf("isnan(pos)==true");
+			pos = (double)cur_stream->seek_pos / AV_TIME_BASE;
+		}
+		pos += incr;
+		if (cur_stream->ic->start_time != AV_NOPTS_VALUE && pos < cur_stream->ic->start_time / (double)AV_TIME_BASE)
+		pos = cur_stream->ic->start_time / (double)AV_TIME_BASE;
+		printf("pos=%lf,incr=%lf,seek_by_bytes=%d\n",pos,incr,get_seek_by_bytes_for_gtk());
+		stream_seek(cur_stream, (int64_t)(pos * AV_TIME_BASE), (int64_t)(incr * AV_TIME_BASE), 0);
 	}
 }
 
@@ -558,12 +606,8 @@ gboolean play_file()
 	return TRUE;
 }  
   
-/* Attempt to seek to the given percentage through the file */  
-void seek_to(gdouble percentage)  
-{  
-	g_print("seek_to\n");  
-}  
-  
+ 
+
   
 int main(int argc, char *argv[])  
 {  
@@ -598,7 +642,7 @@ int main(int argc, char *argv[])
 	char SDL_windowhack[32];
 	//获取GTK视频显示窗口ID,并格式化字符串SDL_windowhack 
 	sprintf(SDL_windowhack, "SDL_WINDOWID=%ld", GDK_WINDOW_XID(video_output->window));
-	g_print("SDL_WINDOWID:=0x%1x\n",GDK_WINDOW_XID(video_output->window)); 
+	g_print("SDL_WINDOWID:=0x%1x\n",(unsigned int)GDK_WINDOW_XID(video_output->window)); 
 	//设置SDL显示窗口环境变量
 	putenv(SDL_windowhack);
 	

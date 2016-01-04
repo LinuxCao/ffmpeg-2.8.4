@@ -56,5 +56,20 @@ void set_videostate_for_gtk(VideoState  *status);
 //Pause
 void toggle_pause(VideoState *is);
 
+//Get seek_by_bytes
+int get_seek_by_bytes_for_gtk();
+
+//Set seek_by_bytes
+void set_seek_by_bytes_for_gtk(int value);
+
+/* return last shown position */
+int64_t frame_queue_last_pos(FrameQueue *f);
+
+/* seek in the stream */
+void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes);
+
+/* get the current master clock value */
+double get_master_clock(VideoState *is);
+
   
 #endif/*FFPLAY_H*/
