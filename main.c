@@ -170,6 +170,7 @@ void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 static void video_seek_value_changed(GtkRange *range, gpointer data)  
 {  
 	g_print("video_seek_value_changed\n");  
+#if 0
 	if(get_videostate_for_gtk())
 	{
 		int64_t ts;
@@ -213,7 +214,7 @@ static void video_seek_value_changed(GtkRange *range, gpointer data)
 		stream_seek(cur_stream, ts, 0, 0);	
 		
 	}		
-	
+#endif
 }  
   
   
@@ -390,10 +391,12 @@ GtkWidget *build_gui()
     // 视频进度条控制  
 	/* value, lower, upper, step_increment, page_increment, page_size */
 	/* 注意，page_size值只对滚动条构件有区别，并且，你实际上能取得的最高值是(upper - page_size)。 */
-	video_schedule_adj = gtk_adjustment_new (0.0, 0.0, 101.0, 0.1, 1.0, 1.0);
+	//video_schedule_adj = gtk_adjustment_new (0.0, 0.0, 101.0, 0.1, 1.0, 1.0);
+	video_schedule_adj = gtk_adjustment_new (0.00, 0.00, 101.00, 0.01, 0.1, 1.0);
+	//video_schedule_adj = gtk_adjustment_new (0, 0, 101, 1, 1, 1);
 	seek_scale = gtk_hscale_new (GTK_ADJUSTMENT (video_schedule_adj));
-    gtk_scale_set_draw_value(GTK_SCALE(seek_scale), FALSE); 
-	gtk_scale_set_digits(GTK_SCALE(seek_scale),1);	
+    gtk_scale_set_draw_value(GTK_SCALE(seek_scale), TRUE); 
+	gtk_scale_set_digits(GTK_SCALE(seek_scale),2);	
     gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_CONTINUOUS);  
 	gtk_scale_set_value_pos (GTK_SCALE(seek_scale), GTK_POS_LEFT);
 	gtk_range_set_adjustment(GTK_RANGE(seek_scale),GTK_ADJUSTMENT(video_schedule_adj));
@@ -526,6 +529,8 @@ gboolean update_time_callback()
 		int ns, hh, mm, ss;
 		int tns, thh, tmm, tss;
 		VideoState* cur_stream;
+		double frac=0;
+		double current_x=0.0;
 	
 		//获取总的播放时间
 		cur_stream=get_videostate_for_gtk();
@@ -539,7 +544,13 @@ gboolean update_time_callback()
 		hh   = ns / 3600;
 		mm   = (ns % 3600) / 60;
 		ss   = (ns % 60);
-		//g_print("(%2d:%02d:%02d) of total duration (%2d:%02d:%02d)\n",hh, mm, ss, thh, tmm, tss);
+		
+		//获取进度条调整对象adjustment
+		frac= ns / (tns*1.0);
+		current_x=(frac * 100);
+		//保留2为小数点
+		current_x = ((int)(current_x*100+0.5))/100.0;
+		g_print("ns=%2d,tns=%2d,frac=%2f current_x=%2f(%2d:%02d:%02d) of total duration (%2d:%02d:%02d)\n",ns,tns,frac,current_x,hh, mm, ss, thh, tmm, tss);
 		
 		if(ns==tns) //总的播放时间和正在播放时间一致，都为总的播放时间
 		{
@@ -570,6 +581,9 @@ gboolean update_time_callback()
 			sprintf(play_time_label_string, "%2d:%02d:%02d", hh, mm, ss);
 			g_print("play_time_label_string=%s\n",play_time_label_string);
 			gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
+			
+			//同步进度条调整对象
+			gtk_adjustment_set_value (GTK_ADJUSTMENT (video_schedule_adj),current_x);
 		}
 		else
 		{
