@@ -58,6 +58,10 @@
 #include "cmdutils.h"
 #include <assert.h>
 
+#include <gdk/gdkx.h>  
+#include <gtk/gtk.h>  
+#include <semaphore.h>
+
 /************************************************************************
 * Macro Define Section
 ************************************************************************/
