@@ -32,11 +32,9 @@
 * Static Variable Define Section
 ************************************************************************/
 static GtkWidget *main_window;  
-static GtkWidget *play_button;  
-static GtkWidget *pause_button;  
-static GtkWidget *stop_button;  
-static GtkWidget *status_label;  
-static GtkWidget *time_label;  
+static GtkWidget *total_time_label;  //总播放的时间标签
+static GtkWidget *play_time_label;  //正在播放的时间标签
+static GtkWidget *separated_time_label; //时间标签分隔符 
 static GtkWidget *seek_scale;  
 static GtkWidget *video_output; 
 static GtkWidget *voice_scale;  
@@ -52,6 +50,9 @@ GtkObject *video_schedule_adj;//video  schedule adjustment
 #define YSIZE 720
 
 static char *current_filename = NULL;  
+static guint timeout_source = 0;  
+static char total_time_label_string[32]={0};
+static char play_time_label_string[32]={0};
 
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
 
@@ -193,7 +194,19 @@ static void video_seek_value_changed(GtkRange *range, gpointer data)
 	ts = frac * cur_stream->ic->duration;
 	if (cur_stream->ic->start_time != AV_NOPTS_VALUE)
 	ts += cur_stream->ic->start_time;
-	//printf("ts=%ld\n",ts);
+	
+	//刷新总的播放时间
+	//获取视频总的播放时间,并格式化字符串total_time_label_string
+	sprintf(total_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
+	printf("total_time_label_string=%s\n",total_time_label_string);
+	gtk_label_set_text(GTK_LABEL(total_time_label), total_time_label_string);  
+	
+	//刷新正在播放时间
+	//获取视频总的播放时间,并格式化字符串play_time_label_string
+	sprintf(play_time_label_string, "%2d:%02d:%02d", hh, mm, ss);
+	printf("play_time_label_string=%s\n",play_time_label_string);
+	gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
+	
 	stream_seek(cur_stream, ts, 0, 0);	
 }  
   
@@ -389,10 +402,20 @@ GtkWidget *build_gui()
     play_controls_hbox = gtk_hbox_new(FALSE, 10);  
     gtk_box_pack_start(GTK_BOX(status_controls_hbox), play_controls_hbox, FALSE, FALSE, 0);  
 	
-	//时间标签     
-    time_label = gtk_label_new("00:00:00");  
-    gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
-    gtk_box_pack_start(GTK_BOX(play_controls_hbox), time_label, FALSE, FALSE, 0);  
+	//正在播放的时间标签     
+    play_time_label = gtk_label_new("00:00:00");  
+    gtk_misc_set_alignment(GTK_MISC(play_time_label), 0.0, 0.5);  
+    gtk_box_pack_start(GTK_BOX(play_controls_hbox), play_time_label, FALSE, FALSE, 0);  
+	
+	//时间标签分隔符     
+    separated_time_label = gtk_label_new("/");  
+    //gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
+    gtk_box_pack_start(GTK_BOX(play_controls_hbox), separated_time_label, FALSE, FALSE, 0);  
+	
+	//总播放的时间标签     
+    total_time_label = gtk_label_new("00:00:00");  
+    //gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
+    gtk_box_pack_start(GTK_BOX(play_controls_hbox), total_time_label, FALSE, FALSE, 0);  
 	
 	//快退按钮
     rewind_button = gtk_toggle_button_new();  
@@ -487,49 +510,6 @@ static void destroy(GtkWidget *widget, gpointer data)
 {  
     gtk_main_quit();  
 }  
-// 更新播放时间  
-void gui_update_time(const gchar *time, const gint64 position, const gint64 length)  
-{  
-	g_print("gui_update_time\n");  
-}  
-// 更新播放状态  
-void gui_status_update(PlayerState state)  
-{  
-	g_print("gui_status_update\n");  
-	switch (state) 
-	{  
-		case STATE_STOP:  
-			gtk_widget_set_sensitive(GTK_WIDGET(stop_button), FALSE);  
-			gtk_widget_set_sensitive(GTK_WIDGET(pause_button), FALSE);             
-			gtk_label_set_markup(GTK_LABEL(status_label), "<b>已停止</b>");  
-			gtk_range_set_value(GTK_RANGE(seek_scale), 0.0);        
-			gtk_label_set_text(GTK_LABEL(time_label), "00:00:00");  
-		break;  
-		case STATE_PLAY:  
-			gtk_widget_set_sensitive(GTK_WIDGET(stop_button), TRUE);  
-			gtk_widget_set_sensitive(GTK_WIDGET(pause_button), TRUE);              
-			gtk_label_set_markup(GTK_LABEL(status_label), "<b>播放中</b>");  
-		break;  
-		case STATE_PAUSE:             
-			gtk_label_set_markup(GTK_LABEL(status_label), "<b>已暂停</b>");  
-		break;  
-		default:  
-		break;  
-	}  
-}  
-/*  
-static gboolean bus_callback(GstBus *bus, GstMessage *message, gpointer data)  
-{  
-   g_print("bus_callback\n");  
-}  
-*/
- /* 
-static gboolean build_gstreamer_pipeline(const gchar *uri)  
-{  
-   g_print("build_gstreamer_pipeline\n");  
-   return TRUE;
-}  
-*/
 
 // load file to play  
 gboolean load_file(gchar *uri)  
@@ -564,26 +544,17 @@ gboolean load_file(gchar *uri)
 	//更新窗口标题为视频文件名 
     gtk_window_set_title(GTK_WINDOW(main_window),(char *)fn);  
 	
-	
+	/* Connect a callback to trigger every 200 milliseconds to 
+	* update the GUI with the playback progress. We remember 
+	* the ID of this source so that we can remove it when we stop 
+	* playing */  
+	//timeout_source = g_timeout_add(200, (GSourceFunc)update_time_callback, NULL);  
+		
 	//显示  
     gtk_widget_show_all(GTK_WIDGET(main_window));   
 	
 	return TRUE;
 }  
-
-/*
-static gboolean update_time_callback(GstElement *pipeline)  
-{  
-	g_print("update_time_callback\n");  
-}  
- */
-gboolean play_file()  
-{  
-	g_print("play_file\n");  
-	return TRUE;
-}  
-  
- 
 
   
 int main(int argc, char *argv[])  
