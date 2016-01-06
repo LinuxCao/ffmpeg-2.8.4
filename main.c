@@ -55,6 +55,8 @@ static char play_time_label_string[32]={0};
 static guint timeout_source = 0;   
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
 
+gboolean seek_flag = FALSE;  
+
 /************************************************************************
 * Function Define Section
 ************************************************************************/
@@ -169,29 +171,30 @@ void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 /* Handler for user moving seek bar */  
 static void video_seek_value_changed(GtkRange *range, gpointer data)  
 {  
-	g_print("video_seek_value_changed\n");  
-#if 0
-	if(get_videostate_for_gtk())
+
+	if(get_videostate_for_gtk() && seek_flag==TRUE)
 	{
+		g_print("video_seek_value_changed\n");  
 		int64_t ts;
 		int ns, hh, mm, ss;
 		int tns, thh, tmm, tss;
-		double x=0.0,frac=0.0,frac1=0.0;
+		double current_x=0.0,frac=0.0;
 		VideoState* cur_stream;
-		x= gtk_adjustment_get_value(GTK_ADJUSTMENT (video_schedule_adj));
+		
+		current_x= gtk_adjustment_get_value(GTK_ADJUSTMENT (video_schedule_adj));
 		cur_stream=get_videostate_for_gtk();
+		
 		tns  = cur_stream->ic->duration / 1000000LL;
 		thh  = tns / 3600;
 		tmm  = (tns % 3600) / 60;
 		tss  = (tns % 60);
-		//frac = x / cur_stream->width;
-		frac1 = cur_stream->width / 100.0;
-		frac = (x*frac1) /cur_stream->width;
-		printf("x=%f,cur_stream->width=%d,frac=%f,frac1=%f\n",x,cur_stream->width,frac,frac1);
-		ns   = frac * tns;
+
+		frac = current_x / 100.0;
+		ns   = (int)(frac * tns);
 		hh   = ns / 3600;
 		mm   = (ns % 3600) / 60;
 		ss   = (ns % 60);
+		printf("current_x=%f,frac=%f,ns=%d,tns=%d\n",current_x,frac,ns,tns);
 		av_log(NULL, AV_LOG_INFO,
 		"Seek to %2.0f%% (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)\n", frac*100,
 		hh, mm, ss, thh, tmm, tss);
@@ -211,12 +214,93 @@ static void video_seek_value_changed(GtkRange *range, gpointer data)
 		printf("play_time_label_string=%s\n",play_time_label_string);
 		gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
 
-		stream_seek(cur_stream, ts, 0, 0);	
-		
-	}		
-#endif
+		stream_seek(cur_stream, ts, 0, 0);		
+	}	
 }  
-  
+
+//更新播放时间回调函数
+gboolean update_time_callback()  
+{  
+	seek_flag=FALSE;
+ 	//g_print("update_time_callback\n");   
+	if(get_videostate_for_gtk())
+	{
+		int ns, hh, mm, ss;
+		int tns, thh, tmm, tss;
+		VideoState* cur_stream;
+		double frac=0;
+		double current_x=0.0;
+	
+		//获取总的播放时间
+		cur_stream=get_videostate_for_gtk();
+		tns  = cur_stream->ic->duration / 1000000LL;
+		thh  = tns / 3600;
+		tmm  = (tns % 3600) / 60;
+		tss  = (tns % 60);
+		
+		//获取视频当前播放时间
+		if (isnan(get_master_clock(cur_stream)))
+		{
+			g_print("get_master_clock(cur_stream) == nan\n");
+			return TRUE;
+		}
+		ns = (int)get_master_clock(cur_stream);
+		hh   = ns / 3600;
+		mm   = (ns % 3600) / 60;
+		ss   = (ns % 60);
+		
+		//获进度条调整对象adjustment
+		frac= ns / (tns*1.0);
+		current_x=(frac * 100);
+		//保留2为小数点
+		current_x = ((int)(current_x*100+0.5))/100.0;
+		g_print("get_master_clock(cur_stream)= %2f,ns=%2d,tns=%2d,frac=%2f current_x=%2f(%2d:%02d:%02d) of total duration (%2d:%02d:%02d)\n",get_master_clock(cur_stream),ns,tns,frac,current_x,hh, mm, ss, thh, tmm, tss);
+		
+		if(ns==tns) //总的播放时间和正在播放时间一致，都为总的播放时间
+		{
+			g_print("End of video\n");  
+			//刷新总的播放时间
+			//获取视频总的播放时间,并格式化字符串total_time_label_string
+			sprintf(total_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
+			g_print("total_time_label_string=%s\n",total_time_label_string);
+			gtk_label_set_text(GTK_LABEL(total_time_label), total_time_label_string);  
+
+			//刷新正在播放时间
+			//获取视频总的播放时间,并格式化字符串play_time_label_string
+			sprintf(play_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
+			g_print("play_time_label_string=%s\n",play_time_label_string);
+			gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
+			
+			//同步进度条调整对象
+			gtk_adjustment_set_value (GTK_ADJUSTMENT (video_schedule_adj),current_x);
+
+		}
+		else if(ns < tns )
+		{
+			//刷新总的播放时间
+			//获取视频总的播放时间,并格式化字符串total_time_label_string
+			sprintf(total_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
+			g_print("total_time_label_string=%s\n",total_time_label_string);
+			gtk_label_set_text(GTK_LABEL(total_time_label), total_time_label_string);  
+
+			//刷新正在播放时间
+			//获取视频总的播放时间,并格式化字符串play_time_label_string
+			sprintf(play_time_label_string, "%2d:%02d:%02d", hh, mm, ss);
+			g_print("play_time_label_string=%s\n",play_time_label_string);
+			gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
+			
+			//同步进度条调整对象
+			gtk_adjustment_set_value (GTK_ADJUSTMENT (video_schedule_adj),current_x);
+		}
+
+	}
+	else
+	{
+		g_print("Failed to initialize VideoState!\n");
+	}
+	seek_flag=TRUE;
+	return TRUE;
+}  
   
 /* Handler for user moving voice_value bar */  
 static void voice_seek_value_changed(GtkRange *range, gpointer data)  
@@ -395,9 +479,9 @@ GtkWidget *build_gui()
 	video_schedule_adj = gtk_adjustment_new (0.00, 0.00, 101.00, 0.01, 0.1, 1.0);
 	//video_schedule_adj = gtk_adjustment_new (0, 0, 101, 1, 1, 1);
 	seek_scale = gtk_hscale_new (GTK_ADJUSTMENT (video_schedule_adj));
-    gtk_scale_set_draw_value(GTK_SCALE(seek_scale), TRUE); 
+    gtk_scale_set_draw_value(GTK_SCALE(seek_scale), FALSE); 
 	gtk_scale_set_digits(GTK_SCALE(seek_scale),2);	
-    gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_CONTINUOUS);  
+    gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_DISCONTINUOUS);  
 	gtk_scale_set_value_pos (GTK_SCALE(seek_scale), GTK_POS_LEFT);
 	gtk_range_set_adjustment(GTK_RANGE(seek_scale),GTK_ADJUSTMENT(video_schedule_adj));
     g_signal_connect(G_OBJECT(seek_scale), "value-changed", G_CALLBACK(video_seek_value_changed), NULL);  
@@ -520,83 +604,7 @@ static void destroy(GtkWidget *widget, gpointer data)
     gtk_main_quit();  
 }  
  
-//更新播放时间回调函数
-gboolean update_time_callback()  
-{  
- 	//g_print("update_time_callback\n");   
-	if(get_videostate_for_gtk())
-	{
-		int ns, hh, mm, ss;
-		int tns, thh, tmm, tss;
-		VideoState* cur_stream;
-		double frac=0;
-		double current_x=0.0;
-	
-		//获取总的播放时间
-		cur_stream=get_videostate_for_gtk();
-		tns  = cur_stream->ic->duration / 1000000LL;
-		thh  = tns / 3600;
-		tmm  = (tns % 3600) / 60;
-		tss  = (tns % 60);
-		
-		//获取视频当前播放时间
-		ns = (int)get_master_clock(cur_stream);
-		hh   = ns / 3600;
-		mm   = (ns % 3600) / 60;
-		ss   = (ns % 60);
-		
-		//获取进度条调整对象adjustment
-		frac= ns / (tns*1.0);
-		current_x=(frac * 100);
-		//保留2为小数点
-		current_x = ((int)(current_x*100+0.5))/100.0;
-		g_print("ns=%2d,tns=%2d,frac=%2f current_x=%2f(%2d:%02d:%02d) of total duration (%2d:%02d:%02d)\n",ns,tns,frac,current_x,hh, mm, ss, thh, tmm, tss);
-		
-		if(ns==tns) //总的播放时间和正在播放时间一致，都为总的播放时间
-		{
-			g_print("End of video\n");  
-			//刷新总的播放时间
-			//获取视频总的播放时间,并格式化字符串total_time_label_string
-			sprintf(total_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
-			g_print("total_time_label_string=%s\n",total_time_label_string);
-			gtk_label_set_text(GTK_LABEL(total_time_label), total_time_label_string);  
 
-			//刷新正在播放时间
-			//获取视频总的播放时间,并格式化字符串play_time_label_string
-			sprintf(play_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
-			g_print("play_time_label_string=%s\n",play_time_label_string);
-			gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
-
-		}
-		else if(ns < tns )
-		{
-			//刷新总的播放时间
-			//获取视频总的播放时间,并格式化字符串total_time_label_string
-			sprintf(total_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
-			g_print("total_time_label_string=%s\n",total_time_label_string);
-			gtk_label_set_text(GTK_LABEL(total_time_label), total_time_label_string);  
-
-			//刷新正在播放时间
-			//获取视频总的播放时间,并格式化字符串play_time_label_string
-			sprintf(play_time_label_string, "%2d:%02d:%02d", hh, mm, ss);
-			g_print("play_time_label_string=%s\n",play_time_label_string);
-			gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
-			
-			//同步进度条调整对象
-			gtk_adjustment_set_value (GTK_ADJUSTMENT (video_schedule_adj),current_x);
-		}
-		else
-		{
-			//do nothing
-			return TRUE;	
-		}
-	}
-	else
-	{
-		g_print("Failed to initialize VideoState!\n");
-	}
-	return TRUE;
-}  
 
 // load file to play  
 gboolean load_file(gchar *uri)  
