@@ -71,5 +71,11 @@ void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes);
 /* get the current master clock value */
 double get_master_clock(VideoState *is);
 
+//Get default_volume_value
+int get_default_volume_value();
+
+//Set default_volume_value
+void set_default_volume_value(int value);
+
   
 #endif/*FFPLAY_H*/

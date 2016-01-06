@@ -45,6 +45,7 @@ static GtkWidget *forward_button; //快进按钮
 static GtkWidget *fullscreen_button; //全屏按钮
 static GtkWidget *voice_slience_button; //静音按钮
 GtkObject *video_schedule_adj;//video  schedule adjustment
+GtkObject *voice_schedule_adj;//voice  schedule adjustment
 
 #define XSIZE 1280
 #define YSIZE 720
@@ -254,7 +255,7 @@ gboolean update_time_callback()
 		current_x=(frac * 100);
 		//保留2为小数点
 		current_x = ((int)(current_x*100+0.5))/100.0;
-		g_print("get_master_clock(cur_stream)= %2f,ns=%2d,tns=%2d,frac=%2f current_x=%2f(%2d:%02d:%02d) of total duration (%2d:%02d:%02d)\n",get_master_clock(cur_stream),ns,tns,frac,current_x,hh, mm, ss, thh, tmm, tss);
+		//g_print("get_master_clock(cur_stream)= %2f,ns=%2d,tns=%2d,frac=%2f current_x=%2f(%2d:%02d:%02d) of total duration (%2d:%02d:%02d)\n",get_master_clock(cur_stream),ns,tns,frac,current_x,hh, mm, ss, thh, tmm, tss);
 		
 		if(ns==tns) //总的播放时间和正在播放时间一致，都为总的播放时间
 		{
@@ -262,13 +263,13 @@ gboolean update_time_callback()
 			//刷新总的播放时间
 			//获取视频总的播放时间,并格式化字符串total_time_label_string
 			sprintf(total_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
-			g_print("total_time_label_string=%s\n",total_time_label_string);
+			//g_print("total_time_label_string=%s\n",total_time_label_string);
 			gtk_label_set_text(GTK_LABEL(total_time_label), total_time_label_string);  
 
 			//刷新正在播放时间
 			//获取视频总的播放时间,并格式化字符串play_time_label_string
 			sprintf(play_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
-			g_print("play_time_label_string=%s\n",play_time_label_string);
+			//g_print("play_time_label_string=%s\n",play_time_label_string);
 			gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
 			
 			//同步进度条调整对象
@@ -280,13 +281,13 @@ gboolean update_time_callback()
 			//刷新总的播放时间
 			//获取视频总的播放时间,并格式化字符串total_time_label_string
 			sprintf(total_time_label_string, "%2d:%02d:%02d", thh, tmm, tss);
-			g_print("total_time_label_string=%s\n",total_time_label_string);
+			//g_print("total_time_label_string=%s\n",total_time_label_string);
 			gtk_label_set_text(GTK_LABEL(total_time_label), total_time_label_string);  
 
 			//刷新正在播放时间
 			//获取视频总的播放时间,并格式化字符串play_time_label_string
 			sprintf(play_time_label_string, "%2d:%02d:%02d", hh, mm, ss);
-			g_print("play_time_label_string=%s\n",play_time_label_string);
+			//g_print("play_time_label_string=%s\n",play_time_label_string);
 			gtk_label_set_text(GTK_LABEL(play_time_label), play_time_label_string); 
 			
 			//同步进度条调整对象
@@ -305,7 +306,13 @@ gboolean update_time_callback()
 /* Handler for user moving voice_value bar */  
 static void voice_seek_value_changed(GtkRange *range, gpointer data)  
 {  
-	g_print("voice_seek_value_changed\n");     
+	g_print("voice_seek_value_changed\n");  
+	double volume_value = gtk_adjustment_get_value(GTK_ADJUSTMENT (voice_schedule_adj));
+	if(volume_value >= 0 && volume_value <= 128)
+	{
+		g_print("set_default_volume_value:%2f\n",volume_value);  
+		set_default_volume_value(volume_value);
+	}
 }  
 void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 {
@@ -398,6 +405,17 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 			//动态设置按钮的图像
 			gtk_button_set_image(GTK_BUTTON(widget),img_voice);
 			gtk_widget_show(widget);
+			
+			//recover SDL Audio
+			g_print("recover SDL Audio\n");
+			double volume_value = gtk_adjustment_get_value(GTK_ADJUSTMENT (voice_schedule_adj));
+			if(volume_value >= 0 && volume_value <= 128)
+			{
+				g_print("set_default_volume_value:%2f\n",volume_value);  
+				set_default_volume_value(volume_value);
+			}
+
+			
 
 		} 
 		else //slience
@@ -410,6 +428,12 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 			//动态设置按钮的图像
 			gtk_button_set_image(GTK_BUTTON(widget),img_slience);
 			gtk_widget_show(widget);
+			
+			//Slience SDL Audio
+			g_print("Slience SDL Audio :set_default_volume_value(0)\n");
+			set_default_volume_value(0);
+			
+
 
 		}
 	}
@@ -425,7 +449,6 @@ GtkWidget *build_gui()
     GtkWidget *voice_status_hbox;  
 	GtkWidget *play_controls_hbox;   
     GtkWidget *status_controls_hbox;
-	GtkObject *voice_schedule_adj;
   
     GtkActionGroup *actiongroup;  
     GtkUIManager *ui_manager;  
@@ -481,7 +504,8 @@ GtkWidget *build_gui()
 	seek_scale = gtk_hscale_new (GTK_ADJUSTMENT (video_schedule_adj));
     gtk_scale_set_draw_value(GTK_SCALE(seek_scale), FALSE); 
 	gtk_scale_set_digits(GTK_SCALE(seek_scale),2);	
-    gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_DISCONTINUOUS);  
+    //gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_DISCONTINUOUS);  
+	gtk_range_set_update_policy(GTK_RANGE(seek_scale), GTK_UPDATE_CONTINUOUS);  
 	gtk_scale_set_value_pos (GTK_SCALE(seek_scale), GTK_POS_LEFT);
 	gtk_range_set_adjustment(GTK_RANGE(seek_scale),GTK_ADJUSTMENT(video_schedule_adj));
     g_signal_connect(G_OBJECT(seek_scale), "value-changed", G_CALLBACK(video_seek_value_changed), NULL);  
@@ -569,7 +593,8 @@ GtkWidget *build_gui()
 	// 音量进度条控制  
 	/* value, lower, upper, step_increment, page_increment, page_size */
 	/* 注意，page_size值只对滚动条构件有区别，并且，你实际上能取得的最高值是(upper - page_size)。 */
-	voice_schedule_adj = gtk_adjustment_new (0, 0, 101, 1, 1, 1);
+	/*音量的可调整范围是0-128*/
+	voice_schedule_adj = gtk_adjustment_new (128, 0, 129, 1, 1, 1);
 	voice_scale = gtk_hscale_new (GTK_ADJUSTMENT (voice_schedule_adj));
 	gtk_widget_set_size_request (GTK_WIDGET(voice_scale),200,-1);
     gtk_scale_set_draw_value(GTK_SCALE(voice_scale), TRUE);  

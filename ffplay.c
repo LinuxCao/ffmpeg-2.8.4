@@ -122,6 +122,7 @@ static SDL_Surface *screen;
 * Function Define Section
 ************************************************************************/
 static VideoState *videostate_for_gtk;
+static int default_volume_value = SDL_MIX_MAXVOLUME;
 
 //Get VideoState
 VideoState* get_videostate_for_gtk()
@@ -144,6 +145,18 @@ int get_seek_by_bytes_for_gtk()
 void set_seek_by_bytes_for_gtk(int value)
 {
 	seek_by_bytes = value;
+}
+
+//Get default_volume_value
+int get_default_volume_value()
+{
+	return default_volume_value;
+}
+
+//Set default_volume_value
+void set_default_volume_value(int value)
+{
+	default_volume_value = value;
 }
 
 
@@ -2238,7 +2251,9 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
         len1 = is->audio_buf_size - is->audio_buf_index;
         if (len1 > len)
             len1 = len;
-        memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1);
+        //memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1);
+		SDL_MixAudio(stream, (uint8_t * )is->audio_buf + is->audio_buf_index, len1, get_default_volume_value());
+		//SDL_MixAudio(stream, (uint8_t * )is->audio_buf + is->audio_buf_index, len1, SDL_MIX_MAXVOLUME );
         len -= len1;
         stream += len1;
         is->audio_buf_index += len1;
