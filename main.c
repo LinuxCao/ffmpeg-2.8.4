@@ -454,6 +454,14 @@ GtkWidget *build_gui()
     GtkWidget *voice_status_hbox;  
 	GtkWidget *play_controls_hbox;   
     GtkWidget *status_controls_hbox;
+	
+	/* Get the Screen Resolution */
+	GdkScreen* screen;
+    gint width, height;
+    screen = gdk_screen_get_default();
+    width = gdk_screen_get_width(screen);
+    height = gdk_screen_get_height(screen);
+    printf("screen width: %d, height: %d\n", width, height);
   
     GtkActionGroup *actiongroup;  
     GtkUIManager *ui_manager;  
@@ -497,6 +505,7 @@ GtkWidget *build_gui()
     
     // 视频显示区域 
     video_output = gtk_drawing_area_new (); 
+	gtk_widget_set_size_request (GTK_WIDGET(video_output), width, (height-200));
     gtk_box_pack_start (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
 
  
@@ -707,9 +716,12 @@ int main(int argc, char *argv[])
     // 创建主窗口GUI  
     gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
 	
-	
+
     // 显示  
-    gtk_widget_show_all(GTK_WIDGET(main_window));    
+    gtk_widget_show_all(GTK_WIDGET(main_window));   
+
+    //主界面绘制完成后，用户不可以调整窗口大小
+	gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
 
 	g_thread_init (NULL);
 	
