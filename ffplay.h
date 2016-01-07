@@ -89,5 +89,7 @@ int get_fs_screen_height();
 //Set fs_screen_height
 void set_fs_screen_height(int value);
 
+void show_usage(void);
+
   
 #endif/*FFPLAY_H*/

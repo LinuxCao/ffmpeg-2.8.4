@@ -497,10 +497,7 @@ GtkWidget *build_gui()
     main_vbox = gtk_vbox_new(0, 6);  
   
     // 添加菜单栏  
-    gtk_box_pack_start(  
-        GTK_BOX(main_vbox),  
-        gtk_ui_manager_get_widget(ui_manager, "/ui/MainMenu"),  
-        FALSE, FALSE, 0);  
+    //gtk_box_pack_start(GTK_BOX(main_vbox),gtk_ui_manager_get_widget(ui_manager, "/ui/MainMenu"),FALSE, FALSE, 0);  
   
     
     // 视频显示区域 
@@ -695,11 +692,7 @@ int main(int argc, char *argv[])
 {  
 
 	int i=0;
-	//printf("You have inputed total %d argments\n",argc);  
-	for(i=0;i<argc;i++)  
-	{  
-		//printf("arg%d : %s\n",i,argv[i]);  
-	} 
+	char *filename=NULL;  
  
     // 初始化 GTK+  
     gtk_init(&argc, &argv);  
@@ -733,6 +726,34 @@ int main(int argc, char *argv[])
 	g_print("SDL_WINDOWID:=0x%1x\n",(unsigned int)GDK_WINDOW_XID(video_output->window)); 
 	//设置SDL显示窗口环境变量
 	putenv(SDL_windowhack);
+	
+	//load file to play by user's cmdline parameter
+	printf("You have inputed total %d argments\n",argc);  
+	for(i=0;i<argc;i++)  
+	{  
+		printf("arg%d : %s\n",i,argv[i]);  
+	} 
+	filename = argv[1];  
+	if (!filename) 
+	{
+		show_usage();
+		av_log(NULL, AV_LOG_FATAL, "An input file must be specified\n");
+		av_log(NULL, AV_LOG_FATAL,
+		"Use -h to get full help or, even better, run 'man %s'\n", program_name);
+		exit(1);
+	}
+
+	if (current_filename) g_free(current_filename);  
+	current_filename = filename;  
+	//load file 
+	if (load_file(filename))  
+	{
+		gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
+		gtk_widget_set_sensitive(GTK_WIDGET(rewind_button), TRUE); 
+		gtk_widget_set_sensitive(GTK_WIDGET(forward_button), TRUE); 
+		gtk_widget_set_sensitive(GTK_WIDGET(fullscreen_button), TRUE); 
+		gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  			
+	}
 	
     // 开始主循环  
     gtk_main();  
