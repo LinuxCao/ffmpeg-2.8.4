@@ -77,5 +77,17 @@ int get_default_volume_value();
 //Set default_volume_value
 void set_default_volume_value(int value);
 
+//Get fs_screen_width
+int get_fs_screen_width();
+
+//Set fs_screen_width
+void set_fs_screen_width(int value);
+
+//Get fs_screen_height
+int get_fs_screen_height();
+
+//Set fs_screen_height
+void set_fs_screen_height(int value);
+
   
 #endif/*FFPLAY_H*/

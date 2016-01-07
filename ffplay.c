@@ -159,6 +159,29 @@ void set_default_volume_value(int value)
 	default_volume_value = value;
 }
 
+//Get fs_screen_width
+int get_fs_screen_width()
+{
+	return fs_screen_width;
+}
+
+//Set fs_screen_width
+void set_fs_screen_width(int value)
+{
+	fs_screen_width = value;
+}
+
+//Get fs_screen_height
+int get_fs_screen_height()
+{
+	return fs_screen_height;
+}
+
+//Set fs_screen_height
+void set_fs_screen_height(int value)
+{
+	fs_screen_height = value;
+}
 
 #if CONFIG_AVFILTER
 static int opt_add_vfilter(void *optctx, const char *opt, const char *arg)
@@ -1006,7 +1029,10 @@ static int video_open(VideoState *is, int force_set_video_mode, Frame *vp)
 
     is->width  = screen->w;
     is->height = screen->h;
-
+	av_log(NULL, 
+		   AV_LOG_FATAL, 
+		   "fs_screen_width=%2d,fs_screen_height=%2d,default_width=%2d,default_height=%2d, screen->w=%2d, screen->h=%2d\n",
+		   fs_screen_width,fs_screen_height,default_width,default_height,screen->w,screen->h);
     return 0;
 }
 

@@ -162,11 +162,16 @@ void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 	g_print("toggle_fullscreen_button_callback\n"); 
 	SDL_Event sdlevent;
 	sdlevent.type = SDL_VIDEORESIZE;
-	sdlevent.resize.w=XSIZE;
-	sdlevent.resize.h=YSIZE;
-	gtk_widget_set_size_request (GTK_WIDGET (video_output), XSIZE, YSIZE);
+	//设置全屏的尺寸
+	sdlevent.resize.w=get_fs_screen_width();
+	sdlevent.resize.h=get_fs_screen_height()-200;
+	//sdlevent.resize.h=YSIZE;
+	//gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), YSIZE);
+	gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), get_fs_screen_height()-200);
 	SDL_PushEvent(&sdlevent);
 	gtk_widget_show(GTK_WIDGET (video_output));
+	//用户不可用调整窗口大小
+    gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);
 }
 
 /* Handler for user moving seek bar */  
