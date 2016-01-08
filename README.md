@@ -40,3 +40,6 @@ Coding examples are available in the **doc/examples** directory.
 
 FFmpeg codebase is mainly LGPL-licensed with optional components licensed under
 GPL. Please refer to the LICENSE file for detailed information.
+
+##Makefile
+gcc -g ffplay.c cmdutils.c main.c  -o ffplay `pkg-config --cflags --libs libavcodec libavdevice libavfilter libavformat libavutil libswresample libswscale gtk+-2.0` -g -Wall -lSDL -lpthread -I/usr/include/SDL -lm -I.  -lgthread-2.0
