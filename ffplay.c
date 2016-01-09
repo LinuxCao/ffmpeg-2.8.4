@@ -3080,7 +3080,7 @@ static void toggle_audio_display(VideoState *is)
 }
 
 static void refresh_loop_wait_event(VideoState *is, SDL_Event *event) {
-	printf("refresh_loop_wait_event\n");
+	//printf("refresh_loop_wait_event\n");
     double remaining_time = 0.0;
     SDL_PumpEvents();
     while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_ALLEVENTS)) {
@@ -3526,14 +3526,7 @@ static int lockmgr(void **mtx, enum AVLockOp op)
 
 /* Called from the main */
 int ffplay_init(int argc, char **argv)
-{
-	int i=0;
-	printf("You have inputed total %d argments\n",argc);  
-	for(i=0;i<argc;i++)  
-	{  
-		printf("arg%d : %s\n",i,argv[i]);  
-	} 
- 
+{ 
 	av_log(NULL, AV_LOG_FATAL, "ffplay_init\n");
     int flags;
     VideoState *is;

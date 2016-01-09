@@ -1,3 +1,4 @@
+
  /************************************************************************
 * File Name : main.c
 * Copyright :  OS-easy Corporation, All Rights Reserved.
@@ -66,14 +67,11 @@ gboolean seek_flag = FALSE;
  // 函数实现
 void *playeropen_thread(char *file)
 {
-	g_print("playeropen_thread start\n"); 
+    //g_print("playeropen_thread start\n"); 
 	char *pfile[2];
 	pfile[0]="ffplay";
 	pfile[1]= file;
-	printf("file:%s\n",file);
-	printf("pfile[0]:%s\n",pfile[0]);
-	printf("pfile[1]:%s\n",pfile[1]);
-	//playeropen_msg_process_thread
+	
 	ffplay_init(2,pfile);
 	
 }
@@ -696,36 +694,6 @@ int main(int argc, char *argv[])
  
     // 初始化 GTK+  
     gtk_init(&argc, &argv);  
-    //gst_init(&argc, &argv);  
-    // 创建窗口  
-    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);  
-    // 设置窗口标题  
-    gtk_window_set_title(GTK_WINDOW(main_window), "FFMPEG Player");  
-	
-	//用户可以自动调整窗口大小
-	gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);
-    // 主窗口销毁句柄  
-    g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(destroy), NULL);  
-    // 创建主窗口GUI  
-    gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
-	
-
-    // 显示  
-    gtk_widget_show_all(GTK_WIDGET(main_window));   
-
-    //主界面绘制完成后，用户不可以调整窗口大小
-	gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
-
-	g_thread_init (NULL);
-	
-	//SDL播放画面嵌入到GTK窗口,切记务必要在整个界面show之后再去获取GTK窗口ID
-	//在GtkWidget没有show出来之前是没有XID（window ID）的。
-	char SDL_windowhack[32];
-	//获取GTK视频显示窗口ID,并格式化字符串SDL_windowhack 
-	sprintf(SDL_windowhack, "SDL_WINDOWID=%ld", GDK_WINDOW_XID(video_output->window));
-	g_print("SDL_WINDOWID:=0x%1x\n",(unsigned int)GDK_WINDOW_XID(video_output->window)); 
-	//设置SDL显示窗口环境变量
-	putenv(SDL_windowhack);
 	
 	//load file to play by user's cmdline parameter
 	printf("You have inputed total %d argments\n",argc);  
@@ -742,11 +710,39 @@ int main(int argc, char *argv[])
 		"Use -h to get full help or, even better, run 'man %s'\n", program_name);
 		exit(1);
 	}
-
 	if (current_filename) g_free(current_filename);  
 	current_filename = filename;  
+  
+    // 创建窗口  
+    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);  
+    // 设置窗口标题  
+    gtk_window_set_title(GTK_WINDOW(main_window), "FFMPEG Player");  
+	//用户可以自动调整窗口大小
+	gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);
+    // 主窗口销毁句柄  
+    g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(destroy), NULL);  
+    // 创建主窗口GUI  
+    gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
+	
+
+    // 显示  
+    gtk_widget_show_all(GTK_WIDGET(main_window));   
+    //主界面绘制完成后，用户不可以调整窗口大小
+	gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
+
+	
+	//SDL播放画面嵌入到GTK窗口,切记务必要在整个界面show之后再去获取GTK窗口ID
+	//在GtkWidget没有show出来之前是没有XID（window ID）的。
+	char SDL_windowhack[32];
+	//获取GTK视频显示窗口ID,并格式化字符串SDL_windowhack 
+	sprintf(SDL_windowhack, "SDL_WINDOWID=%ld", GDK_WINDOW_XID(video_output->window));
+	g_print("SDL_WINDOWID:=0x%1x\n",(unsigned int)GDK_WINDOW_XID(video_output->window)); 
+	//设置SDL显示窗口环境变量
+	putenv(SDL_windowhack);
+	
+
 	//load file 
-	if (load_file(filename))  
+	if (load_file(current_filename))  
 	{
 		gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
 		gtk_widget_set_sensitive(GTK_WIDGET(rewind_button), TRUE); 
@@ -755,7 +751,7 @@ int main(int argc, char *argv[])
 		gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  			
 	}
 	
-    // 开始主循环  
+    //开始主循环  
     gtk_main();  
   
     return 0;  
