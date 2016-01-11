@@ -38,12 +38,17 @@ static GtkWidget *play_time_label;  //正在播放的时间标签
 static GtkWidget *seek_scale;  
 static GtkWidget *video_output; 
 static GtkWidget *voice_scale;  
+static GtkWidget *main_vbox;  
+static GtkWidget *play_controls_hbox;   
 
 static GtkWidget *play_button;   //播放暂停按钮
 //static GtkWidget *fullscreen_button; //全屏按钮
 static GtkWidget *voice_slience_button; //静音按钮
-GtkObject *video_schedule_adj;//video  schedule adjustment
-GtkObject *voice_schedule_adj;//voice  schedule adjustment
+static GtkObject *video_schedule_adj;//video  schedule adjustment
+static GtkObject *voice_schedule_adj;//voice  schedule adjustment
+static GdkScreen* screen;  //gtk screen 
+static gint width=0;  //gtk screen resolution:width
+static gint height=0; //gtk screen resolution:heigth
 
 #define XSIZE 1280
 #define YSIZE 720
@@ -337,18 +342,12 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 
 GtkWidget *build_gui()  
 {  
-    GtkWidget *main_vbox;  
+    //GtkWidget *main_vbox;  
     //GtkWidget *voice_status_hbox;  
-	GtkWidget *play_controls_hbox;   
+	//GtkWidget *play_controls_hbox;   
     //GtkWidget *status_controls_hbox;
 	
-	/* Get the Screen Resolution */
-	GdkScreen* screen;
-    gint width, height;
-    screen = gdk_screen_get_default();
-    width = gdk_screen_get_width(screen);
-    height = gdk_screen_get_height(screen);
-    printf("screen width: %d, height: %d\n", width, height);
+
   
   
     // 创建主 GtkVBOx. 其他所有都在它里面  
@@ -359,8 +358,8 @@ GtkWidget *build_gui()
     
     // 视频显示区域 
     video_output = gtk_drawing_area_new (); 
-	gtk_widget_set_size_request (GTK_WIDGET(video_output), width, (height-200));
-    gtk_box_pack_start (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
+	gtk_widget_set_size_request (GTK_WIDGET(video_output), width,height-100);
+    gtk_box_pack_start (GTK_BOX (main_vbox), video_output, FALSE, FALSE, 0); 
 
 	
 	// status_controls_hbox  
@@ -523,13 +522,24 @@ int main(int argc, char *argv[])
 	}
 	if (current_filename) g_free(current_filename);  
 	current_filename = filename;  
+	
+    /* Get the Screen Resolution */
+    screen = gdk_screen_get_default();
+    width = gdk_screen_get_width(screen);
+    height = gdk_screen_get_height(screen);
+    printf("screen width: %d, height: %d\n", width, height);
   
     //创建窗口  
-    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);  
+    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL); 
+	//设置窗口居中显示
+	gtk_window_set_position(GTK_WINDOW(main_window), GTK_WIN_POS_CENTER);  	
     //设置窗口标题  
     gtk_window_set_title(GTK_WINDOW(main_window), "FFMPEG Player");  
+	//设置窗口大小,整个窗口设置成分辨率大小 
+	gtk_window_set_default_size(GTK_WINDOW(main_window), width, height);  
+	
 	//用户可以自动调整窗口大小
-	gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);
+	//gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);
 	/* 你应该总是记住连接 delete_event 信号到主窗口。这对适当的直觉行为很重要 */
 	g_signal_connect (G_OBJECT (main_window), "delete_event",G_CALLBACK (delete_event), NULL);
 	//设置窗口边框
@@ -540,8 +550,9 @@ int main(int argc, char *argv[])
 
     //显示  
     gtk_widget_show_all(GTK_WIDGET(main_window));   
+	
     //主界面绘制完成后，用户不可以调整窗口大小
-	gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
+	//gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
 
 	
 	//SDL播放画面嵌入到GTK窗口,切记务必要在整个界面show之后再去获取GTK窗口ID

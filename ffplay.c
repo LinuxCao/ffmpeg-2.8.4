@@ -993,7 +993,7 @@ static void set_default_window_size(int width, int height, AVRational sar)
     //default_width  = rect.w;
     //default_height = rect.h;
 	default_width  = fs_screen_width;
-    default_height = fs_screen_height-200;
+    default_height = fs_screen_height-100;
 }
 
 static int video_open(VideoState *is, int force_set_video_mode, Frame *vp)
