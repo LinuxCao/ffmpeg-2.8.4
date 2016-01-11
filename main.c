@@ -309,12 +309,25 @@ gboolean update_time_callback()
 /* Handler for user moving voice_value bar */  
 static void voice_seek_value_changed(GtkRange *range, gpointer data)  
 {  
-	g_print("voice_seek_value_changed\n");  
+	g_print("voice_seek_value_changed\n"); 
+	
+
+	
 	double volume_value = gtk_adjustment_get_value(GTK_ADJUSTMENT (voice_schedule_adj));
 	if(volume_value >= 0 && volume_value <= 128)
 	{
 		g_print("set_default_volume_value:%2f\n",volume_value);  
 		set_default_volume_value(volume_value);
+	}
+	if(volume_value > 0) //silence icon -> voice icon
+	{
+		//使用指定图标创建按钮图像
+		GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
+		//动态设置按钮的图像
+		gtk_button_set_image(GTK_BUTTON(voice_slience_button),img_voice);
+		//active voice status
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(voice_slience_button),TRUE);
+		gtk_widget_show(voice_slience_button);
 	}
 }  
 void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
@@ -411,6 +424,7 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 			
 			//Slience SDL Audio
 			g_print("Slience SDL Audio :set_default_volume_value(0)\n");
+			gtk_adjustment_set_value (GTK_ADJUSTMENT (voice_schedule_adj),0);
 			set_default_volume_value(0);
 			
 
