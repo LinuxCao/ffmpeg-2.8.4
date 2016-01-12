@@ -3302,6 +3302,7 @@ static void event_loop(VideoState *cur_stream)
             break;
         case SDL_QUIT:
         case FF_QUIT_EVENT:
+			 printf("FF_QUIT_EVENT\n");
             do_exit(cur_stream);
             break;
         case FF_ALLOC_EVENT:

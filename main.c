@@ -27,6 +27,7 @@
 #include "main.h"  
 #include "ffplay.h" 
 #include "define_ffplay.h"
+#include <gdk/gdkkeysyms.h>
 
   
 /************************************************************************
@@ -496,6 +497,33 @@ gint delete_event( GtkWidget *widget,GdkEvent *event,gpointer data )
 	gtk_main_quit ();
 	return FALSE;
 } 
+
+gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data)
+{
+	g_print("on_main_window_key_press_event\n"); 
+    switch(event->keyval) {
+    case GDK_Up:
+        g_print("Up\n");
+        break;
+    case GDK_Left:
+        g_print("Left\n");
+        break;
+    case GDK_Right:
+        g_print("Right\n");
+        break;
+    case GDK_Down:
+        g_print("Down\n");
+        break;
+	case GDK_Escape:
+		g_print("Esc\n");
+		//ffplay exit
+		SDL_Event sdlevent;
+		sdlevent.type = FF_QUIT_EVENT;
+		SDL_PushEvent(&sdlevent);
+        break;
+    }
+      return FALSE;
+}
 int main(int argc, char *argv[])  
 {  
 
@@ -540,10 +568,15 @@ int main(int argc, char *argv[])
 	
 	//用户可以自动调整窗口大小
 	//gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);
+	
 	/* 你应该总是记住连接 delete_event 信号到主窗口。这对适当的直觉行为很重要 */
 	g_signal_connect (G_OBJECT (main_window), "delete_event",G_CALLBACK (delete_event), NULL);
+	
+	//键盘获取事件
+    g_signal_connect(G_OBJECT(main_window), "key-press-event", G_CALLBACK(on_main_window_key_press_event), NULL);
+	
 	//设置窗口边框
-	gtk_container_set_border_width (GTK_CONTAINER (main_window), 10);
+	gtk_container_set_border_width (GTK_CONTAINER (main_window), 0);
     // 创建主窗口GUI  
     gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
 	
