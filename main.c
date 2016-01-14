@@ -42,8 +42,11 @@ static GtkWidget *voice_scale;
 static GtkWidget *main_vbox;  
 static GtkWidget *play_controls_hbox;   
 
+static GtkWidget *close_button;   //停止按钮
 static GtkWidget *play_button;   //播放暂停按钮
-//static GtkWidget *fullscreen_button; //全屏按钮
+static GtkWidget *rewind_button;  //快退按钮
+static GtkWidget *forward_button; //快进按钮
+static GtkWidget *fullscreen_button; //全屏按钮
 static GtkWidget *voice_slience_button; //静音按钮
 static GtkObject *video_schedule_adj;//video  schedule adjustment
 static GtkObject *voice_schedule_adj;//voice  schedule adjustment
@@ -77,6 +80,111 @@ void *playeropen_thread(char *file)
 	ffplay_init(2,pfile);
 	
 }
+
+// 打开文件  
+static void file_open(GtkAction *action)  
+{ 
+
+	g_print("file_open\n"); 
+#if 0 
+	GtkWidget *file_chooser = gtk_file_chooser_dialog_new(  
+        "Open File", GTK_WINDOW(main_window),  
+        GTK_FILE_CHOOSER_ACTION_OPEN,  
+        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,  
+        GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,  
+        NULL);  
+  
+    if (gtk_dialog_run(GTK_DIALOG(file_chooser)) == GTK_RESPONSE_ACCEPT) 
+	{  
+		char *filename;  
+		filename = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(file_chooser));  
+		// g_signal_emit_by_name(G_OBJECT(stop_button), "clicked");  
+		if (current_filename) g_free(current_filename);  
+		current_filename = filename;  
+
+		//load file 
+        if (load_file(filename))  
+		{
+            gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
+			gtk_widget_set_sensitive(GTK_WIDGET(rewind_button), TRUE); 
+			gtk_widget_set_sensitive(GTK_WIDGET(forward_button), TRUE); 
+			gtk_widget_set_sensitive(GTK_WIDGET(fullscreen_button), TRUE); 
+			gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  			
+
+		}
+
+	}
+	gtk_widget_destroy(file_chooser);
+#endif
+}  
+// 退出  
+static void file_quit(GtkAction *action)  
+{  
+    gtk_main_quit();  
+}  
+// 关于  
+static void help_about(GtkAction *action)  
+{  
+	g_print("help_about\n"); 
+#if 0
+	GtkWidget *about_dialog = gtk_about_dialog_new();  
+	gtk_about_dialog_set_name(GTK_ABOUT_DIALOG(about_dialog), "FFMPEG Player");  
+	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), "0.0.0");  
+	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(about_dialog), "Copyright @ 2015, OS-easy");  
+
+	gtk_dialog_run(GTK_DIALOG(about_dialog));  
+	gtk_widget_destroy(about_dialog); 
+#endif	
+}  
+  
+static GtkActionEntry mainwindow_action_entries[] = {  
+    { "FileMenu", "NULL", "文件" },  
+    {  
+        "OpenFile",  
+        GTK_STOCK_OPEN,  
+        "打开(O)",  
+        "<control>O",  
+        "Open a file for playback",  
+        G_CALLBACK(file_open)  
+    },  
+    {  
+        "QuitPlayer",  
+        GTK_STOCK_QUIT,  
+        "退出(Q)",  
+        "<control>Q",  
+        "Quit the media player",  
+        G_CALLBACK(file_quit)  
+    },  
+    
+    { "HelpMenu", "NULL", "帮助" },  
+    {  
+        "HelpAbout",  
+        GTK_STOCK_ABOUT,  
+        "关于",  
+        "",  
+        "About the media player",  
+        G_CALLBACK(help_about)  
+    }  
+};  
+
+void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
+{
+	g_print("toggle_fullscreen_button_callback\n"); 
+	SDL_Event sdlevent;
+	sdlevent.type = SDL_VIDEORESIZE;
+	//设置全屏的尺寸
+	sdlevent.resize.w=get_fs_screen_width();
+	sdlevent.resize.h=get_fs_screen_height()-200;
+	//sdlevent.resize.h=YSIZE;
+	//gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), YSIZE);
+	gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), get_fs_screen_height()-200);
+	SDL_PushEvent(&sdlevent);
+	gtk_widget_show(GTK_WIDGET (video_output));
+	//用户不可用调整窗口大小
+    gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);
+}
+
+
 
 /* Handler for user moving seek bar */  
 static void video_seek_value_changed(GtkRange *range, gpointer data)  
@@ -202,7 +310,8 @@ gboolean update_time_callback()
 			//同步进度条调整对象
 			gtk_adjustment_set_value (GTK_ADJUSTMENT (video_schedule_adj),current_x);
 		}
-
+		//refresh screen
+		toggle_fullscreen_button_callback(GTK_WIDGET (video_output),NULL);
 	}
 	else
 	{
@@ -238,19 +347,24 @@ static void voice_seek_value_changed(GtkRange *range, gpointer data)
 }  
 void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 {
+#if 1
+	GtkWidget *button = data;
 	g_print("toggle_play_pause_button_callback\n"); 
 	if(current_filename)
 	{
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))//play
 		{
+			
 			g_print("GTK_STOCK_MEDIA_PLAY\n");   
 			//使用内置的图标创建图像
 			//GtkWidget* img_play = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
 			//使用指定图标创建按钮图像
 			GtkWidget* img_play= gtk_image_new_from_file("play.png");
 			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(widget),img_play);
-			gtk_widget_show(widget);
+			gtk_button_set_image(GTK_BUTTON(button),img_play);
+			g_print("widget=%d\n",widget); 
+			
+			//gtk_widget_show(widget);
 			
 			//ffplay pause
 			SDL_Event sdlevent;
@@ -265,12 +379,12 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 		{
 			g_print("GTK_STOCK_MEDIA_PAUSE\n");   
 			//使用内置的图标创建图像
-			//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
+			//GtkWidget* img_pause = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
 			//使用指定图标创建按钮图像
 			GtkWidget* img_pause= gtk_image_new_from_file("pause.png");
 			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(widget),img_pause);
-			gtk_widget_show(widget);
+			gtk_button_set_image(GTK_BUTTON(button),img_pause);
+			//gtk_widget_show(widget);
 
 			//ffplay play
 			SDL_Event sdlevent;
@@ -285,6 +399,7 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 	{
 		g_print("please choose open video file.\n"); 
 	}
+#endif
 }
 
 void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
@@ -341,26 +456,81 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 	}
 }
 
+void toggle_close_button_callback(GtkWidget *widget, gpointer data)
+{
+	
+	gtk_main_quit();  
+}
+
 GtkWidget *build_gui()  
 {  
-    //GtkWidget *main_vbox;  
-    //GtkWidget *voice_status_hbox;  
-	//GtkWidget *play_controls_hbox;   
-    //GtkWidget *status_controls_hbox;
+    GtkWidget *main_vbox;  
+    GtkWidget *voice_status_hbox;  
+	GtkWidget *play_controls_hbox;   
+    GtkWidget *status_controls_hbox;
 	
-
+	/* Get the Screen Resolution */
+	GdkScreen* screen;
+    gint width, height;
+    screen = gdk_screen_get_default();
+    width = gdk_screen_get_width(screen);
+    height = gdk_screen_get_height(screen);
+    printf("screen width: %d, height: %d\n", width, height);
   
+    GtkActionGroup *actiongroup;  
+    GtkUIManager *ui_manager;  
+  
+    actiongroup = gtk_action_group_new("MainwindowActiongroup");  
+    gtk_action_group_add_actions(actiongroup,  
+        mainwindow_action_entries,  
+        G_N_ELEMENTS(mainwindow_action_entries),  
+        NULL);  
+  
+    ui_manager = gtk_ui_manager_new();  
+    gtk_ui_manager_insert_action_group(ui_manager, actiongroup, 0);  
+    gtk_ui_manager_add_ui_from_string(  
+        ui_manager,  
+        "<ui>"  
+        "    <menubar name='MainMenu'>"  
+        "        <menu action='FileMenu'>"  
+        "            <menuitem action='OpenFile'/>"  
+        "            <separator name='fsep1'/>"  
+        "            <menuitem action='QuitPlayer'/>"  
+        "        </menu>"  
+        "        <menu action='HelpMenu'>"  
+        "            <menuitem action='HelpAbout'/>"  
+        "        </menu>"         
+        "    </menubar>"  
+        "</ui>",  
+        -1,  
+        NULL);  
+      
   
     // 创建主 GtkVBOx. 其他所有都在它里面  
     // 0：各个构件高度可能不同，6：构件之间的间距为6 像素  
-    main_vbox = gtk_vbox_new(0, 6);  
+    main_vbox = gtk_vbox_new(0, 0);  
   
-  
+    // 添加菜单栏  
+    //gtk_box_pack_start(GTK_BOX(main_vbox), gtk_ui_manager_get_widget(ui_manager, "/ui/MainMenu"), FALSE, FALSE, 0);  
+	
+	// status_controls_hbox  
+    status_controls_hbox = gtk_hbox_new(FALSE, 0);  
+    gtk_box_pack_start(GTK_BOX(main_vbox), status_controls_hbox, FALSE, FALSE, 0);  
+		
+	//退出按钮
+    close_button = gtk_button_new();  
+	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+	GtkWidget* img_close = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_BUTTON);
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_BUTTON(close_button),img_close);
+    g_signal_connect(G_OBJECT(close_button), "clicked", G_CALLBACK(toggle_close_button_callback), NULL);  
+	gtk_box_pack_end(GTK_BOX(status_controls_hbox), close_button, FALSE, FALSE, 0);
+    
     
     // 视频显示区域 
     video_output = gtk_drawing_area_new (); 
-	gtk_widget_set_size_request (GTK_WIDGET(video_output), width,height-100);
-    gtk_box_pack_start (GTK_BOX (main_vbox), video_output, FALSE, FALSE, 0); 
+	gtk_widget_set_size_request (GTK_WIDGET(video_output), width, (height-200));
+    gtk_box_pack_start (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
 
 	
 	// status_controls_hbox  
@@ -381,7 +551,8 @@ GtkWidget *build_gui()
     gtk_widget_set_sensitive(play_button, FALSE);
 	//默认是处于播放toggle,用户再点一下就是暂停toggle
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(play_button),TRUE);
-    g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
+    g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), play_button);  
+	//gtk_widget_set_size_request (GTK_WIDGET(play_button), 30, 30);
 	gtk_box_pack_start(GTK_BOX(play_controls_hbox), play_button, FALSE, FALSE, 10);
 	
 	//正在播放的时间标签     
@@ -443,7 +614,19 @@ GtkWidget *build_gui()
 	gtk_range_set_adjustment(GTK_RANGE(voice_scale),GTK_ADJUSTMENT(voice_schedule_adj));
     g_signal_connect(G_OBJECT(voice_scale), "value-changed", G_CALLBACK(voice_seek_value_changed), NULL);  
     gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_scale, FALSE, FALSE, 10);  
-
+#if 0	
+	//全屏按钮
+    fullscreen_button = gtk_toggle_button_new();  
+	GtkWidget* img_fullscreen = gtk_image_new_from_stock( GTK_STOCK_ZOOM_FIT ,GTK_ICON_SIZE_BUTTON);
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_BUTTON(fullscreen_button),img_fullscreen);
+    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
+    gtk_widget_set_sensitive(fullscreen_button, FALSE);
+	//默认是处于全屏toggle,用户再点一下就是1:1播放
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fullscreen_button),TRUE);
+    g_signal_connect(G_OBJECT(fullscreen_button), "clicked", G_CALLBACK(toggle_fullscreen_button_callback), NULL);  
+	gtk_box_pack_end(GTK_BOX(play_controls_hbox), fullscreen_button, FALSE, FALSE, 10);
+#endif
     return main_vbox;  
 }  	 
   
@@ -560,11 +743,11 @@ int main(int argc, char *argv[])
     //创建窗口  
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL); 
 	//设置窗口居中显示
-	gtk_window_set_position(GTK_WINDOW(main_window), GTK_WIN_POS_CENTER);  	
+	//gtk_window_set_position(GTK_WINDOW(main_window), GTK_WIN_POS_CENTER);  	
     //设置窗口标题  
     gtk_window_set_title(GTK_WINDOW(main_window), "FFMPEG Player");  
 	//设置窗口大小,整个窗口设置成分辨率大小 
-	gtk_window_set_default_size(GTK_WINDOW(main_window), width, height);  
+	//gtk_window_set_default_size(GTK_WINDOW(main_window), width, height);  
 	
 	//用户可以自动调整窗口大小
 	//gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);
@@ -576,7 +759,7 @@ int main(int argc, char *argv[])
     g_signal_connect(G_OBJECT(main_window), "key-press-event", G_CALLBACK(on_main_window_key_press_event), NULL);
 	
 	//设置窗口边框
-	gtk_container_set_border_width (GTK_CONTAINER (main_window), 0);
+	//gtk_container_set_border_width (GTK_CONTAINER (main_window), 0);
     // 创建主窗口GUI  
     gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
 	
@@ -585,8 +768,9 @@ int main(int argc, char *argv[])
     gtk_widget_show_all(GTK_WIDGET(main_window));   
 	
     //主界面绘制完成后，用户不可以调整窗口大小
-	//gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
+	gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
 
+	g_thread_init (NULL);
 	
 	//SDL播放画面嵌入到GTK窗口,切记务必要在整个界面show之后再去获取GTK窗口ID
 	//在GtkWidget没有show出来之前是没有XID（window ID）的。
@@ -602,7 +786,8 @@ int main(int argc, char *argv[])
 	if (load_file(current_filename))  
 	{
 		gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
-		gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  			
+		gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  	
+		gtk_widget_set_sensitive(GTK_WIDGET(fullscreen_button), TRUE); 		
 	}
 	
     //开始主循环  
