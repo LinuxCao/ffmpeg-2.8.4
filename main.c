@@ -174,10 +174,10 @@ void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 	sdlevent.type = SDL_VIDEORESIZE;
 	//设置全屏的尺寸
 	sdlevent.resize.w=get_fs_screen_width();
-	sdlevent.resize.h=get_fs_screen_height()-200;
+	sdlevent.resize.h=get_fs_screen_height()-50;
 	//sdlevent.resize.h=YSIZE;
 	//gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), YSIZE);
-	gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), get_fs_screen_height()-200);
+	gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), get_fs_screen_height()-50);
 	SDL_PushEvent(&sdlevent);
 	gtk_widget_show(GTK_WIDGET (video_output));
 	//用户不可用调整窗口大小
@@ -311,7 +311,7 @@ gboolean update_time_callback()
 			gtk_adjustment_set_value (GTK_ADJUSTMENT (video_schedule_adj),current_x);
 		}
 		//refresh screen
-		toggle_fullscreen_button_callback(GTK_WIDGET (video_output),NULL);
+		//toggle_fullscreen_button_callback(GTK_WIDGET (video_output),NULL);
 	}
 	else
 	{
@@ -529,8 +529,10 @@ GtkWidget *build_gui()
     
     // 视频显示区域 
     video_output = gtk_drawing_area_new (); 
-	gtk_widget_set_size_request (GTK_WIDGET(video_output), width, (height-200));
+	gtk_widget_set_size_request (GTK_WIDGET(video_output), width, (height-50));
     gtk_box_pack_start (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
+	//turn off gtk double buffer!!
+	gtk_widget_set_double_buffered(video_output, FALSE);
 
 	
 	// status_controls_hbox  
