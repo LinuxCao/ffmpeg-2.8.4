@@ -55,8 +55,7 @@ static GdkScreen* gtk_screen;  //gtk screen
 static gint gtk_screen_width=0;  //gtk screen resolution:width
 static gint gtk_screen_height=0; //gtk screen resolution:heigth
 
-//#define XSIZE 1280
-//#define YSIZE 720
+
 
 static char *current_filename = NULL;  
 static char total_time_label_string[32]={0};
@@ -65,12 +64,30 @@ static guint timeout_source = 0;
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
 gboolean seek_flag = FALSE;  
 
+// initialize play_controls_hbox、 status_controls_hbox and video_output'size 
+gint play_controls_hbox_width=0, play_controls_hbox_height=0;
+gint status_controls_hbox_width=0, status_controls_hbox_height=0;
+gint video_output_width=0, video_output_height=0;
+
 /************************************************************************
 * Function Define Section
 ************************************************************************/
 
+//Get video_output_height
+int get_video_output_height()
+{
+	return video_output_height;
+}
+
+//Set video_output_height
+void set_video_output_height(int value)
+{
+	video_output_height = value;
+}
+
+
  /* Start playing video*/  
-static void *playeropen_thread(char *file)
+void *playeropen_thread(char *file)
 {
     //g_print("playeropen_thread start\n"); 
 	char *pfile[2];
@@ -187,7 +204,7 @@ void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 
 
 /* Video progress bar callback function */  
-static void video_seek_value_changed(GtkRange *range, gpointer data)  
+void video_seek_value_changed(GtkRange *range, gpointer data)  
 {  
 
 	if(get_videostate_for_gtk() && seek_flag==TRUE)
@@ -237,7 +254,7 @@ static void video_seek_value_changed(GtkRange *range, gpointer data)
 }  
 
 /*Update playback time callback function*/
-static gboolean update_time_callback()  
+gboolean update_time_callback()  
 {  
 	seek_flag=FALSE;
  	//g_print("update_time_callback\n");   
@@ -315,14 +332,14 @@ static gboolean update_time_callback()
 	}
 	else
 	{
-		g_print("Failed to initialize VideoState!\n");
+		g_print("Failed to update_time_callback\n");
 	}
 	seek_flag=TRUE;
 	return TRUE;
 }  
   
 /* voice progress bar callback function */  
-static void voice_seek_value_changed(GtkRange *range, gpointer data)  
+void voice_seek_value_changed(GtkRange *range, gpointer data)  
 {  
 	g_print("voice_seek_value_changed\n"); 
 	
@@ -347,7 +364,7 @@ static void voice_seek_value_changed(GtkRange *range, gpointer data)
 }  
 
 /* Play or pause callback function */   
-static void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
+void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 {
 	GtkWidget *button = data;
 	g_print("toggle_play_pause_button_callback\n"); 
@@ -401,7 +418,7 @@ static void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 }
 
 /* voice or slience callback function */  
-static void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
+void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_voice_slience_button_callback\n"); 
 	if(current_filename)
@@ -465,7 +482,7 @@ void toggle_close_button_callback(GtkWidget *widget, gpointer data)
 
 
 /* keyborad callback function */  
-static gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data)
+gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data)
 {
 	g_print("on_main_window_key_press_event\n"); 
     switch(event->keyval) {
@@ -493,14 +510,14 @@ static gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *e
 }
 
 /* Destroy window*/  
-static gint delete_event( GtkWidget *widget,GdkEvent *event,gpointer data )
+gint delete_event( GtkWidget *widget,GdkEvent *event,gpointer data )
 {
 	gtk_main_quit ();
 	return FALSE;
 } 
 
 /* Load video file*/  
-static gboolean load_file(gchar *uri)  
+gboolean load_file(gchar *uri)  
 { 
 	g_print("load_file\n");  
 	
@@ -545,7 +562,7 @@ static gboolean load_file(gchar *uri)
 }  
 
 /* Create GUI interface*/  
-static GtkWidget *build_gui()  
+GtkWidget *build_gui()  
 {  
 #if 0
     //GtkWidget *main_vbox;  
@@ -600,6 +617,7 @@ static GtkWidget *build_gui()
 	
 	// status_controls_hbox :close button
     status_controls_hbox = gtk_hbox_new(FALSE, 0);  
+	gtk_widget_set_size_request(GTK_WIDGET(status_controls_hbox),-1,STATUS_CONTROLS_HBOX_HEIGHT);
     gtk_box_pack_start(GTK_BOX(main_vbox), status_controls_hbox, FALSE, FALSE, 0);  
 		
 	//关闭按钮
@@ -610,18 +628,13 @@ static GtkWidget *build_gui()
 	gtk_button_set_image(GTK_BUTTON(close_button),img_close);
     g_signal_connect(G_OBJECT(close_button), "clicked", G_CALLBACK(toggle_close_button_callback), NULL);  
 	gtk_box_pack_end(GTK_BOX(status_controls_hbox), close_button, FALSE, FALSE, 0);
-    
-    
-    // 视频显示区域 
-    video_output = gtk_drawing_area_new (); 
-	gtk_widget_set_size_request (GTK_WIDGET(video_output), gtk_screen_width, (gtk_screen_height-50));
-	//turn off gtk double buffer!!
-	gtk_widget_set_double_buffered(video_output, FALSE);
-    gtk_box_pack_start (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
+  
 
 	// play_controls_hbox  
     play_controls_hbox = gtk_hbox_new(FALSE, 10);  
-    gtk_box_pack_start(GTK_BOX(main_vbox), play_controls_hbox, FALSE, FALSE, 0);  
+	gtk_widget_set_size_request(GTK_WIDGET(play_controls_hbox),-1,PLAY_CONTROLS_HBOX_HEIGHT);
+    //gtk_box_pack_start(GTK_BOX(main_vbox), play_controls_hbox, FALSE, FALSE, 0);  
+	gtk_box_pack_end(GTK_BOX(main_vbox), play_controls_hbox, FALSE, FALSE, 0);  
 	
 	//播放/暂停按钮
     play_button = gtk_toggle_button_new();  
@@ -692,6 +705,30 @@ static GtkWidget *build_gui()
 	gtk_range_set_adjustment(GTK_RANGE(voice_scale),GTK_ADJUSTMENT(voice_schedule_adj));
     g_signal_connect(G_OBJECT(voice_scale), "value-changed", G_CALLBACK(voice_seek_value_changed), NULL);  
     gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_scale, FALSE, FALSE, 10);  
+	
+	
+	// Get the size of status_controls_hbox
+	gtk_widget_get_size_request (GTK_WIDGET(status_controls_hbox), &status_controls_hbox_width, &status_controls_hbox_height);
+	printf("status_controls_hbox:width %d, height %d\n",status_controls_hbox_width,status_controls_hbox_height); 
+	
+	// Get the size of play_controls_hbox
+	gtk_widget_get_size_request (GTK_WIDGET(play_controls_hbox), &play_controls_hbox_width, &play_controls_hbox_height);
+	printf("play_controls_hbox:width %d, height %d\n",play_controls_hbox_width,play_controls_hbox_height);  
+ 
+	
+	
+	// 视频显示区域 
+	video_output = gtk_drawing_area_new (); 
+	gtk_widget_set_size_request (GTK_WIDGET(video_output), gtk_screen_width, (gtk_screen_height-( play_controls_hbox_height + status_controls_hbox_height)));
+	//turn off gtk double buffer!!
+	gtk_widget_set_double_buffered(video_output, FALSE);
+	gtk_box_pack_end (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
+	
+	// Get the size of video_output
+	gtk_widget_get_size_request (GTK_WIDGET(video_output), &video_output_width, &video_output_height);
+	printf("video_output:width %d, height %d\n",video_output_width,video_output_height);  
+	set_video_output_height(video_output_height);
+
 #if 0	
 	//全屏按钮
     fullscreen_button = gtk_toggle_button_new();  
@@ -744,11 +781,14 @@ int main(int argc, char *argv[])
     //创建窗口  
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL); 
 	//设置窗口居中显示
-	//gtk_window_set_position(GTK_WINDOW(main_window), GTK_WIN_POS_CENTER);  	
+	gtk_window_set_position(GTK_WINDOW(main_window), GTK_WIN_POS_CENTER);  	
     //设置窗口标题  
     gtk_window_set_title(GTK_WINDOW(main_window), "FFMPEG Player");  
 	//设置窗口大小,整个窗口设置成分辨率大小 
-	//gtk_window_set_default_size(GTK_WINDOW(main_window), width, height);  
+	gtk_window_set_default_size(GTK_WINDOW(main_window), gtk_screen_width, gtk_screen_height); 
+	
+	/* hide the title bar and the boder */ 
+	gtk_window_set_decorated(GTK_WINDOW(main_window), FALSE); 	
 	
 	//用户可以自动调整窗口大小
 	//gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);

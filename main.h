@@ -47,37 +47,47 @@
 * Prototype Declare Section
 ************************************************************************/
 
+#define STATUS_CONTROLS_HBOX_HEIGHT 30
+#define PLAY_CONTROLS_HBOX_HEIGHT 45
+
+
  /* Start playing video*/  
-static void *playeropen_thread(char *file);
+void *playeropen_thread(char *file);
 
 /* Video progress bar callback function */  
-static void video_seek_value_changed(GtkRange *range, gpointer data);
+void video_seek_value_changed(GtkRange *range, gpointer data);
 
 /* Update playback time callback function */
-static gboolean update_time_callback();
+gboolean update_time_callback();
 
 /* voice progress bar callback function */  
-static void voice_seek_value_changed(GtkRange *range, gpointer data);
+void voice_seek_value_changed(GtkRange *range, gpointer data);
 
 /* Play or pause callback function */   
-static void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data);
+void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data);
 
 /* voice or slience callback function */  
-static void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data);
+void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data);
 
 /* close callback function */  
 void toggle_close_button_callback(GtkWidget *widget, gpointer data);
 
 /* keyborad callback function */  
-static gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data);
+gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data);
 
 /* Destroy window*/  
-static gint delete_event( GtkWidget *widget,GdkEvent *event,gpointer data );
+gint delete_event( GtkWidget *widget,GdkEvent *event,gpointer data );
 
 /* Load video file*/  
-static gboolean load_file(gchar *uri);
+gboolean load_file(gchar *uri);
 
 /* Create GUI interface*/  
-static GtkWidget *build_gui();
+GtkWidget *build_gui();
+
+//Get video_output_height
+int get_video_output_height();
+
+//Set video_output_height
+void set_video_output_height(int value);
 
 #endif 

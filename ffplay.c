@@ -63,6 +63,9 @@
 
 #include "define_ffplay.h"
 
+#include "main.h"  
+#include "ffplay.h" 
+
 const char program_name[] = "ffplay";
 const int program_birth_year = 2003;
 
@@ -993,7 +996,7 @@ static void set_default_window_size(int width, int height, AVRational sar)
     //default_width  = rect.w;
     //default_height = rect.h;
 	default_width  = fs_screen_width;
-    default_height = fs_screen_height-50;
+    default_height = get_video_output_height();
 }
 
 static int video_open(VideoState *is, int force_set_video_mode, Frame *vp)
