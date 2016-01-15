@@ -46,13 +46,38 @@
 /************************************************************************
 * Prototype Declare Section
 ************************************************************************/
-void gui_status_update(PlayerState state);  
-void gui_update_time(const gchar *time, const gint64 position, const gint64 length);  
-// load file to play  
-gboolean load_file(gchar *uri); 
-void seek_to(gdouble percentage);  
-gboolean play_file();
 
-void do_seek(double pincr);
-  
+ /* Start playing video*/  
+static void *playeropen_thread(char *file);
+
+/* Video progress bar callback function */  
+static void video_seek_value_changed(GtkRange *range, gpointer data);
+
+/* Update playback time callback function */
+static gboolean update_time_callback();
+
+/* voice progress bar callback function */  
+static void voice_seek_value_changed(GtkRange *range, gpointer data);
+
+/* Play or pause callback function */   
+static void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data);
+
+/* voice or slience callback function */  
+static void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data);
+
+/* close callback function */  
+void toggle_close_button_callback(GtkWidget *widget, gpointer data);
+
+/* keyborad callback function */  
+static gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data);
+
+/* Destroy window*/  
+static gint delete_event( GtkWidget *widget,GdkEvent *event,gpointer data );
+
+/* Load video file*/  
+static gboolean load_file(gchar *uri);
+
+/* Create GUI interface*/  
+static GtkWidget *build_gui();
+
 #endif 

@@ -41,52 +41,54 @@ static GtkWidget *video_output;
 static GtkWidget *voice_scale;  
 static GtkWidget *main_vbox;  
 static GtkWidget *play_controls_hbox;   
+static GtkWidget *status_controls_hbox;
 
 static GtkWidget *close_button;   //停止按钮
 static GtkWidget *play_button;   //播放暂停按钮
-static GtkWidget *rewind_button;  //快退按钮
-static GtkWidget *forward_button; //快进按钮
-static GtkWidget *fullscreen_button; //全屏按钮
+//static GtkWidget *rewind_button;  //快退按钮
+//static GtkWidget *forward_button; //快进按钮
+//static GtkWidget *fullscreen_button; //全屏按钮
 static GtkWidget *voice_slience_button; //静音按钮
 static GtkObject *video_schedule_adj;//video  schedule adjustment
 static GtkObject *voice_schedule_adj;//voice  schedule adjustment
-static GdkScreen* screen;  //gtk screen 
-static gint width=0;  //gtk screen resolution:width
-static gint height=0; //gtk screen resolution:heigth
+static GdkScreen* gtk_screen;  //gtk screen 
+static gint gtk_screen_width=0;  //gtk screen resolution:width
+static gint gtk_screen_height=0; //gtk screen resolution:heigth
 
-#define XSIZE 1280
-#define YSIZE 720
+//#define XSIZE 1280
+//#define YSIZE 720
 
 static char *current_filename = NULL;  
 static char total_time_label_string[32]={0};
 static char play_time_label_string[32]={0};
 static guint timeout_source = 0;   
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
-
 gboolean seek_flag = FALSE;  
 
 /************************************************************************
 * Function Define Section
 ************************************************************************/
 
- // 函数实现
-void *playeropen_thread(char *file)
+ /* Start playing video*/  
+static void *playeropen_thread(char *file)
 {
     //g_print("playeropen_thread start\n"); 
 	char *pfile[2];
 	pfile[0]="ffplay";
 	pfile[1]= file;
-	
 	ffplay_init(2,pfile);
+	
+	return NULL;
 	
 }
 
+/************************************************************************/
+#if 0
 // 打开文件  
 static void file_open(GtkAction *action)  
 { 
 
-	g_print("file_open\n"); 
-#if 0 
+	g_print("file_open\n");  
 	GtkWidget *file_chooser = gtk_file_chooser_dialog_new(  
         "Open File", GTK_WINDOW(main_window),  
         GTK_FILE_CHOOSER_ACTION_OPEN,  
@@ -115,7 +117,6 @@ static void file_open(GtkAction *action)
 
 	}
 	gtk_widget_destroy(file_chooser);
-#endif
 }  
 // 退出  
 static void file_quit(GtkAction *action)  
@@ -126,15 +127,13 @@ static void file_quit(GtkAction *action)
 static void help_about(GtkAction *action)  
 {  
 	g_print("help_about\n"); 
-#if 0
 	GtkWidget *about_dialog = gtk_about_dialog_new();  
 	gtk_about_dialog_set_name(GTK_ABOUT_DIALOG(about_dialog), "FFMPEG Player");  
 	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), "0.0.0");  
 	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(about_dialog), "Copyright @ 2015, OS-easy");  
 
 	gtk_dialog_run(GTK_DIALOG(about_dialog));  
-	gtk_widget_destroy(about_dialog); 
-#endif	
+	gtk_widget_destroy(about_dialog); 	
 }  
   
 static GtkActionEntry mainwindow_action_entries[] = {  
@@ -166,7 +165,6 @@ static GtkActionEntry mainwindow_action_entries[] = {
         G_CALLBACK(help_about)  
     }  
 };  
-
 void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_fullscreen_button_callback\n"); 
@@ -183,10 +181,12 @@ void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
 	//用户不可用调整窗口大小
     gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);
 }
+#endif
+
+/************************************************************************/
 
 
-
-/* Handler for user moving seek bar */  
+/* Video progress bar callback function */  
 static void video_seek_value_changed(GtkRange *range, gpointer data)  
 {  
 
@@ -236,8 +236,8 @@ static void video_seek_value_changed(GtkRange *range, gpointer data)
 	}	
 }  
 
-//更新播放时间回调函数
-gboolean update_time_callback()  
+/*Update playback time callback function*/
+static gboolean update_time_callback()  
 {  
 	seek_flag=FALSE;
  	//g_print("update_time_callback\n");   
@@ -321,7 +321,7 @@ gboolean update_time_callback()
 	return TRUE;
 }  
   
-/* Handler for user moving voice_value bar */  
+/* voice progress bar callback function */  
 static void voice_seek_value_changed(GtkRange *range, gpointer data)  
 {  
 	g_print("voice_seek_value_changed\n"); 
@@ -345,9 +345,10 @@ static void voice_seek_value_changed(GtkRange *range, gpointer data)
 		gtk_widget_show(voice_slience_button);
 	}
 }  
-void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
+
+/* Play or pause callback function */   
+static void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 {
-#if 1
 	GtkWidget *button = data;
 	g_print("toggle_play_pause_button_callback\n"); 
 	if(current_filename)
@@ -361,9 +362,7 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 			//使用指定图标创建按钮图像
 			GtkWidget* img_play= gtk_image_new_from_file("play.png");
 			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(button),img_play);
-			g_print("widget=%d\n",widget); 
-			
+			gtk_button_set_image(GTK_BUTTON(button),img_play);			
 			//gtk_widget_show(widget);
 			
 			//ffplay pause
@@ -399,10 +398,10 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 	{
 		g_print("please choose open video file.\n"); 
 	}
-#endif
 }
 
-void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
+/* voice or slience callback function */  
+static void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 {
 	g_print("toggle_voice_slience_button_callback\n"); 
 	if(current_filename)
@@ -456,18 +455,103 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 	}
 }
 
+/* close callback function */  
 void toggle_close_button_callback(GtkWidget *widget, gpointer data)
 {
 	
 	gtk_main_quit();  
 }
 
-GtkWidget *build_gui()  
+
+
+/* keyborad callback function */  
+static gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data)
+{
+	g_print("on_main_window_key_press_event\n"); 
+    switch(event->keyval) {
+    case GDK_Up:
+        g_print("Up\n");
+        break;
+    case GDK_Left:
+        g_print("Left\n");
+        break;
+    case GDK_Right:
+        g_print("Right\n");
+        break;
+    case GDK_Down:
+        g_print("Down\n");
+        break;
+	case GDK_Escape:
+		g_print("Esc\n");
+		//ffplay exit
+		SDL_Event sdlevent;
+		sdlevent.type = FF_QUIT_EVENT;
+		SDL_PushEvent(&sdlevent);
+        break;
+    }
+      return FALSE;
+}
+
+/* Destroy window*/  
+static gint delete_event( GtkWidget *widget,GdkEvent *event,gpointer data )
+{
+	gtk_main_quit ();
+	return FALSE;
+} 
+
+/* Load video file*/  
+static gboolean load_file(gchar *uri)  
+{ 
+	g_print("load_file\n");  
+	
+	char fn[256],*p;
+	char pathname[256];
+	int err;
+	
+	//创建ffplay播放视频线程
+    err = pthread_create(&playeropen_msg_process_thread_tid, NULL, playeropen_thread, uri);
+    if (err != 0)
+        printf("can't create thread: %s\n", strerror(err));
+	else
+		printf("playeropen_thread pthread_create success\n");
+	
+	//父线程调用pthread_detach(thread_id)（非阻塞，可立即返回）
+	//这将该子线程的状态设置为分离的（detached），如此一来，该线程运行结束后会自动释放所有资源。
+	pthread_detach(playeropen_msg_process_thread_tid);
+	
+	//从路径名中分离文件名
+	//全文件名赋值给pathname
+	strncpy(pathname, uri,256);
+
+	//第2实参这样写以防止文件在当前目录下时因p=NULL而出错
+	strcpy(fn,(p=strrchr(pathname,'/')) ? p+1 : pathname);
+	
+	//打出来看看
+	printf("%s\n",fn);
+	
+	//更新窗口标题为视频文件名 
+    gtk_window_set_title(GTK_WINDOW(main_window),(char *)fn);  
+	
+	/* Connect a callback to trigger every 200 milliseconds to 
+	* update the GUI with the playback progress. We remember 
+	* the ID of this source so that we can remove it when we stop 
+	* playing */  
+	timeout_source = g_timeout_add(500, (GSourceFunc)update_time_callback, NULL);  
+		
+	//显示  
+    gtk_widget_show_all(GTK_WIDGET(main_window));   
+	
+	return TRUE;
+}  
+
+/* Create GUI interface*/  
+static GtkWidget *build_gui()  
 {  
-    GtkWidget *main_vbox;  
-    GtkWidget *voice_status_hbox;  
-	GtkWidget *play_controls_hbox;   
-    GtkWidget *status_controls_hbox;
+#if 0
+    //GtkWidget *main_vbox;  
+    //GtkWidget *voice_status_hbox;  
+	//GtkWidget *play_controls_hbox;   
+    //GtkWidget *status_controls_hbox;
 	
 	/* Get the Screen Resolution */
 	GdkScreen* screen;
@@ -505,19 +589,20 @@ GtkWidget *build_gui()
         -1,  
         NULL);  
       
-  
+#endif 
+
     // 创建主 GtkVBOx. 其他所有都在它里面  
-    // 0：各个构件高度可能不同，6：构件之间的间距为6 像素  
+    // 0：各个构件高度可能不同，0：构件之间的间距为0像素  
     main_vbox = gtk_vbox_new(0, 0);  
   
     // 添加菜单栏  
     //gtk_box_pack_start(GTK_BOX(main_vbox), gtk_ui_manager_get_widget(ui_manager, "/ui/MainMenu"), FALSE, FALSE, 0);  
 	
-	// status_controls_hbox  
+	// status_controls_hbox :close button
     status_controls_hbox = gtk_hbox_new(FALSE, 0);  
     gtk_box_pack_start(GTK_BOX(main_vbox), status_controls_hbox, FALSE, FALSE, 0);  
 		
-	//退出按钮
+	//关闭按钮
     close_button = gtk_button_new();  
 	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
 	GtkWidget* img_close = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_BUTTON);
@@ -529,15 +614,10 @@ GtkWidget *build_gui()
     
     // 视频显示区域 
     video_output = gtk_drawing_area_new (); 
-	gtk_widget_set_size_request (GTK_WIDGET(video_output), width, (height-50));
-    gtk_box_pack_start (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
+	gtk_widget_set_size_request (GTK_WIDGET(video_output), gtk_screen_width, (gtk_screen_height-50));
 	//turn off gtk double buffer!!
 	gtk_widget_set_double_buffered(video_output, FALSE);
-
-	
-	// status_controls_hbox  
-    //status_controls_hbox = gtk_hbox_new(FALSE, 10);  
-    //gtk_box_pack_start(GTK_BOX(main_vbox), status_controls_hbox, FALSE, FALSE, 0);  
+    gtk_box_pack_start (GTK_BOX (main_vbox), video_output, TRUE, TRUE, 0); 
 
 	// play_controls_hbox  
     play_controls_hbox = gtk_hbox_new(FALSE, 10);  
@@ -584,10 +664,6 @@ GtkWidget *build_gui()
     //gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
     gtk_box_pack_start(GTK_BOX(play_controls_hbox), total_time_label, FALSE, FALSE, 0);  
 	
-
-	// voice_status_hbox  
-    //voice_status_hbox = gtk_hbox_new(FALSE, 10);  
-    //gtk_box_pack_end(GTK_BOX(status_controls_hbox), voice_status_hbox, FALSE, FALSE, 0);  
 	
 	//静音按钮
     voice_slience_button = gtk_toggle_button_new();  
@@ -631,84 +707,7 @@ GtkWidget *build_gui()
 #endif
     return main_vbox;  
 }  	 
-  
-// load file to play  
-gboolean load_file(gchar *uri)  
-{ 
-	g_print("load_file\n");  
-	
-	char fn[256],*p;
-	char pathname[256];
-	int err;
-	
-	//创建ffplay播放视频线程
-    err = pthread_create(&playeropen_msg_process_thread_tid, NULL, playeropen_thread, uri);
-    if (err != 0)
-        printf("can't create thread: %s\n", strerror(err));
-	else
-		printf("playeropen_thread pthread_create success\n");
-	
-	//父线程调用pthread_detach(thread_id)（非阻塞，可立即返回）
-	//这将该子线程的状态设置为分离的（detached），如此一来，该线程运行结束后会自动释放所有资源。
-	pthread_detach(playeropen_msg_process_thread_tid);
-	
-	//从路径名中分离文件名
-	//全文件名赋值给pathname
-	strncpy(pathname, uri,256);
 
-	//第2实参这样写以防止文件在当前目录下时因p=NULL而出错
-	strcpy(fn,(p=strrchr(pathname,'/')) ? p+1 : pathname);
-	
-	//打出来看看
-	printf("%s\n",fn);
-	
-	//更新窗口标题为视频文件名 
-    gtk_window_set_title(GTK_WINDOW(main_window),(char *)fn);  
-	
-	/* Connect a callback to trigger every 200 milliseconds to 
-	* update the GUI with the playback progress. We remember 
-	* the ID of this source so that we can remove it when we stop 
-	* playing */  
-	timeout_source = g_timeout_add(500, (GSourceFunc)update_time_callback, NULL);  
-		
-	//显示  
-    gtk_widget_show_all(GTK_WIDGET(main_window));   
-	
-	return TRUE;
-}  
-
-gint delete_event( GtkWidget *widget,GdkEvent *event,gpointer data )
-{
-	gtk_main_quit ();
-	return FALSE;
-} 
-
-gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data)
-{
-	g_print("on_main_window_key_press_event\n"); 
-    switch(event->keyval) {
-    case GDK_Up:
-        g_print("Up\n");
-        break;
-    case GDK_Left:
-        g_print("Left\n");
-        break;
-    case GDK_Right:
-        g_print("Right\n");
-        break;
-    case GDK_Down:
-        g_print("Down\n");
-        break;
-	case GDK_Escape:
-		g_print("Esc\n");
-		//ffplay exit
-		SDL_Event sdlevent;
-		sdlevent.type = FF_QUIT_EVENT;
-		SDL_PushEvent(&sdlevent);
-        break;
-    }
-      return FALSE;
-}
 int main(int argc, char *argv[])  
 {  
 
@@ -737,10 +736,10 @@ int main(int argc, char *argv[])
 	current_filename = filename;  
 	
     /* Get the Screen Resolution */
-    screen = gdk_screen_get_default();
-    width = gdk_screen_get_width(screen);
-    height = gdk_screen_get_height(screen);
-    printf("screen width: %d, height: %d\n", width, height);
+    gtk_screen = gdk_screen_get_default();
+    gtk_screen_width = gdk_screen_get_width(gtk_screen);
+    gtk_screen_height = gdk_screen_get_height(gtk_screen);
+    printf("gtk_screen gtk_screen_width: %d, gtk_screen_height: %d\n", gtk_screen_width, gtk_screen_height);
   
     //创建窗口  
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL); 
@@ -789,7 +788,6 @@ int main(int argc, char *argv[])
 	{
 		gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
 		gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  	
-		gtk_widget_set_sensitive(GTK_WIDGET(fullscreen_button), TRUE); 		
 	}
 	
     //开始主循环  

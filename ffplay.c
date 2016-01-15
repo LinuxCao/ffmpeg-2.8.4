@@ -3243,7 +3243,6 @@ static void event_loop(VideoState *cur_stream)
         case SDL_VIDEOEXPOSE:
             cur_stream->force_refresh = 1;
             break;
-#if 0
         case SDL_MOUSEBUTTONDOWN:
             if (exit_on_mousedown) {
                 do_exit(cur_stream);
@@ -3289,7 +3288,6 @@ static void event_loop(VideoState *cur_stream)
                     stream_seek(cur_stream, ts, 0, 0);
                 }
             break;
-#endif
         case SDL_VIDEORESIZE:
 				printf("SDL_VIDEORESIZE\n");
                 screen = SDL_SetVideoMode(FFMIN(16383, event.resize.w), event.resize.h, 0,
