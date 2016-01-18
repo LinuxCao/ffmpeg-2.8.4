@@ -622,10 +622,13 @@ GtkWidget *build_gui()
 		
 	//关闭按钮
     close_button = gtk_button_new();  
-	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
-	GtkWidget* img_close = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_BUTTON);
+
+	//GtkWidget* img_close = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_BUTTON);
+	GtkWidget* img_close= gtk_image_new_from_file("close.png");
+	
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(close_button),img_close);
+
     g_signal_connect(G_OBJECT(close_button), "clicked", G_CALLBACK(toggle_close_button_callback), NULL);  
 	gtk_box_pack_end(GTK_BOX(status_controls_hbox), close_button, FALSE, FALSE, 0);
   

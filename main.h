@@ -47,7 +47,7 @@
 * Prototype Declare Section
 ************************************************************************/
 
-#define STATUS_CONTROLS_HBOX_HEIGHT 30
+#define STATUS_CONTROLS_HBOX_HEIGHT 20
 #define PLAY_CONTROLS_HBOX_HEIGHT 45
 
 
