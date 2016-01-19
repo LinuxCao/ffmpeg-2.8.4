@@ -65,6 +65,7 @@ static guint timeout_source = 0;
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
 gboolean seek_flag = FALSE;  
 gboolean play_button_status = FALSE;  //播放暂停标志位：1-播放 0-暂停 
+gboolean voice_slience_button_status = FALSE;  //声音和静音标志位：1-声音 0-静音 
 
 // initialize play_controls_hbox、 status_controls_hbox and video_output'size 
 gint play_controls_hbox_width=0, play_controls_hbox_height=0;
@@ -98,6 +99,19 @@ void set_play_button_status(gboolean value)
 {
 	play_button_status = value;
 }
+
+//Get voice_slience_button_status
+gboolean get_voice_slience_button_status()
+{
+	return voice_slience_button_status;
+}
+
+//Set voice_slience_button_status
+void set_voice_slience_button_status(gboolean value)
+{
+	voice_slience_button_status = value;
+}
+
 
 
  /* Start playing video*/  
@@ -485,6 +499,8 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 	}
 }	
 #endif
+
+#if 0
 /* voice or slience callback function */  
 void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 {
@@ -539,7 +555,67 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 		g_print("please choose open video file.\n"); 
 	}
 }
+#else
+/* voice or slience callback function */  
+void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
+{
+	g_print("toggle_voice_slience_button_callback\n"); 
+	if(current_filename)
+	{
+		if (get_voice_slience_button_status())//voice
+		{
+			g_print("voice\n");   
+			//使用内置的图标创建图像
+			//GtkWidget* img_play = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+			//使用指定图标创建按钮图像
+			GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
+			//动态设置按钮的图像
+			gtk_button_set_image(GTK_BUTTON(widget),img_voice);
+			gtk_widget_show(widget);
+			
+			//recover SDL Audio
+			g_print("recover SDL Audio\n");
+			double volume_value = gtk_adjustment_get_value(GTK_ADJUSTMENT (voice_schedule_adj));
+			if(volume_value >= 0 && volume_value <= 128)
+			{
+				g_print("set_default_volume_value:%2f\n",volume_value);  
+				set_default_volume_value(volume_value);
+			}
+			
+			//此刻为声音状态，故设置为静音的标志位，等待下次点击就是静音处理
+			set_voice_slience_button_status(FALSE);
+			
 
+		} 
+		else //slience
+		{
+			g_print("slience\n");   
+			//使用内置的图标创建图像
+			//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
+			//使用指定图标创建按钮图像
+			GtkWidget* img_slience= gtk_image_new_from_file("slience.png");
+			//动态设置按钮的图像
+			gtk_button_set_image(GTK_BUTTON(widget),img_slience);
+			gtk_widget_show(widget);
+			
+			//Slience SDL Audio
+			g_print("Slience SDL Audio :set_default_volume_value(0)\n");
+			gtk_adjustment_set_value (GTK_ADJUSTMENT (voice_schedule_adj),0);
+			set_default_volume_value(0);
+			
+			//此刻为静音状态，故设置为声音的标志位，等待下次点击就是声音处理
+			set_voice_slience_button_status(TRUE);
+			
+
+
+		}
+	}
+	else
+	{
+		g_print("please choose open video file.\n"); 
+	}
+}
+#endif
 /* close callback function */  
 void toggle_close_button_callback(GtkWidget *widget, gpointer data)
 {
@@ -785,7 +861,7 @@ GtkWidget *build_gui()
     //gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
     gtk_box_pack_start(GTK_BOX(play_controls_hbox), total_time_label, FALSE, FALSE, 0);  
 	
-	
+#if 0	
 	//静音按钮
     voice_slience_button = gtk_toggle_button_new();  
 	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
@@ -798,7 +874,19 @@ GtkWidget *build_gui()
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(voice_slience_button),TRUE);
     g_signal_connect(G_OBJECT(voice_slience_button), "clicked", G_CALLBACK(toggle_voice_slience_button_callback), NULL);  
 	gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_slience_button, FALSE, FALSE, 0);
-	
+#else
+	//静音按钮
+    voice_slience_button = gtk_button_new();  
+	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+	GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_BUTTON(voice_slience_button),img_voice);
+    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
+    gtk_widget_set_sensitive(voice_slience_button, FALSE);
+    g_signal_connect(G_OBJECT(voice_slience_button), "clicked", G_CALLBACK(toggle_voice_slience_button_callback), NULL);  
+	gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_slience_button, FALSE, FALSE, 0);
+#endif
+
 	// 音量进度条控制  
 	/* value, lower, upper, step_increment, page_increment, page_size */
 	/* 注意，page_size值只对滚动条构件有区别，并且，你实际上能取得的最高值是(upper - page_size)。 */
