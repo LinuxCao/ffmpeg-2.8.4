@@ -55,6 +55,7 @@ static GtkObject *voice_schedule_adj;//voice  schedule adjustment
 static GdkScreen* gtk_screen;  //gtk screen 
 static gint gtk_screen_width=0;  //gtk screen resolution:width
 static gint gtk_screen_height=0; //gtk screen resolution:heigth
+static GtkAccelGroup *play_button_accelerate;
 
 
 
@@ -651,17 +652,18 @@ gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gp
         break;
 	case GDK_space:
 		g_print("GDK_space\n");
+#if 0
 		if(1 == gtk_widget_is_focus(play_button)) 
 		{
-			printf("1 == gtk_widget_is_focus(play_button)\n");  
-			printf("do nothing\n");  
+		printf("1 == gtk_widget_is_focus(play_button)\n");  
+		printf("do nothing\n");  
 		}
 		else
 		{
-			printf("0 == gtk_widget_is_focus(play_button)\n");  
-			toggle_play_pause_button_callback (play_button,NULL);
+		printf("0 == gtk_widget_is_focus(play_button)\n");  
+		toggle_play_pause_button_callback (play_button,NULL);
 		}
-		
+#endif
         break;
 	default:
 		break;
@@ -1000,6 +1002,13 @@ int main(int argc, char *argv[])
     // 创建主窗口GUI  
     gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
 	
+	
+	 //bind Accelerate for play_button 
+	play_button_accelerate = gtk_accel_group_new();
+    gtk_window_add_accel_group(GTK_WINDOW(main_window), play_button_accelerate);
+	//快捷键注册，其实就是当快捷键按下的时候，为控件触发一个信号
+	//(GdkModifierType)0为不使用修饰键
+	gtk_widget_add_accelerator(play_button,"clicked",play_button_accelerate,GDK_space,(GdkModifierType)0,GTK_ACCEL_VISIBLE);
 
     //显示  
     gtk_widget_show_all(GTK_WIDGET(main_window));   
