@@ -636,6 +636,8 @@ GtkWidget *build_gui()
 	GtkWidget* img_close= gtk_image_new_from_file("close.png");
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(close_button),img_close);
+	//设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件 TRUE表示响应鼠标键盘事件
+    gtk_widget_set_sensitive(GTK_WIDGET(close_button), FALSE); 
     g_signal_connect(G_OBJECT(close_button), "clicked", G_CALLBACK(toggle_close_button_callback), NULL);  
 	gtk_box_pack_end(GTK_BOX(status_controls_hbox), close_button, FALSE, FALSE, 0);
   
@@ -652,8 +654,8 @@ GtkWidget *build_gui()
 	GtkWidget* img_play= gtk_image_new_from_file("play.png");
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(play_button),img_play);
-    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
-    gtk_widget_set_sensitive(play_button, FALSE);
+    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件 TRUE表示响应鼠标键盘事件
+    gtk_widget_set_sensitive(play_button, TRUE);
 	//默认是处于播放toggle,用户再点一下就是暂停toggle
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(play_button),TRUE);
     g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), play_button);  
@@ -818,6 +820,15 @@ int main(int argc, char *argv[])
     //显示  
     gtk_widget_show_all(GTK_WIDGET(main_window));   
 	
+	if(1 == gtk_widget_is_focus(play_button)) 
+	{
+		printf("1 == gtk_widget_is_focus(play_button)\n");  
+	}
+	if(1 == gtk_widget_is_focus(close_button)) 
+	{
+		printf("1 == gtk_widget_is_focus(close_button)\n");  
+	}
+	
     //主界面绘制完成后，用户不可以调整窗口大小
 	gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
 
@@ -838,6 +849,7 @@ int main(int argc, char *argv[])
 	{
 		gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
 		gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  	
+	    gtk_widget_set_sensitive(GTK_WIDGET(close_button), TRUE);  	
 	}
 	
     //开始主循环  
