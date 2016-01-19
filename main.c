@@ -64,6 +64,7 @@ static char play_time_label_string[32]={0};
 static guint timeout_source = 0;   
 pthread_t playeropen_msg_process_thread_tid; 				//视频消息处理线程
 gboolean seek_flag = FALSE;  
+gboolean play_button_status = FALSE;  //播放暂停标志位：1-播放 0-暂停 
 
 // initialize play_controls_hbox、 status_controls_hbox and video_output'size 
 gint play_controls_hbox_width=0, play_controls_hbox_height=0;
@@ -84,6 +85,18 @@ int get_video_output_height()
 void set_video_output_height(int value)
 {
 	video_output_height = value;
+}
+
+//Get play_button_status
+gboolean get_play_button_status()
+{
+	return play_button_status;
+}
+
+//Set play_button_status
+void set_play_button_status(gboolean value)
+{
+	play_button_status = value;
 }
 
 
@@ -363,7 +376,7 @@ void voice_seek_value_changed(GtkRange *range, gpointer data)
 		gtk_widget_show(voice_slience_button);
 	}
 }  
-
+#if 0
 /* Play or pause callback function */   
 void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 {
@@ -417,7 +430,61 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 		g_print("please choose open video file.\n"); 
 	}
 }
+#else
+/* Play or pause callback function */   
+void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
+{
+	g_print("toggle_play_pause_button_callback\n"); 
+	if(current_filename)
+	{
+		if (get_play_button_status()==TRUE)//play
+		{
+			
+			g_print("GTK_STOCK_MEDIA_PLAY\n");   
+			//使用指定图标创建按钮图像
+			GtkWidget* img_play= gtk_image_new_from_file("play.png");
+			//动态设置按钮的图像
+			gtk_button_set_image(GTK_BUTTON(play_button),img_play);			
+		
+			
+			//ffplay pause
+			SDL_Event sdlevent;
+			sdlevent.type = SDL_KEYDOWN;
+			sdlevent.key.keysym.sym = SDLK_SPACE;
+			SDL_PushEvent(&sdlevent);
+			
+			//此刻为播放状态，故设置为暂停的标志位，等待下次点击就是暂停处理
+			set_play_button_status(FALSE);
+			
+			
+		} 
+		else //pause
+		{
+			g_print("GTK_STOCK_MEDIA_PAUSE\n");   
+			//使用指定图标创建按钮图像
+			GtkWidget* img_pause= gtk_image_new_from_file("pause.png");
+			//动态设置按钮的图像
+			gtk_button_set_image(GTK_BUTTON(play_button),img_pause);
+	
 
+			//ffplay play
+			SDL_Event sdlevent;
+			sdlevent.type = SDL_KEYDOWN;
+			sdlevent.key.keysym.sym = SDLK_SPACE;
+			SDL_PushEvent(&sdlevent);
+			
+			//此刻为暂停状态，故设置为播放的标志位，等待下次点击就是播放处理
+			set_play_button_status(TRUE);
+			
+
+		}
+	}
+	else
+	{
+		g_print("please choose open video file.\n"); 
+	}
+}	
+#endif
 /* voice or slience callback function */  
 void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 {
@@ -506,6 +573,22 @@ gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gp
 		sdlevent.type = FF_QUIT_EVENT;
 		SDL_PushEvent(&sdlevent);
         break;
+	case GDK_space:
+		g_print("GDK_space\n");
+		if(1 == gtk_widget_is_focus(play_button)) 
+		{
+			printf("1 == gtk_widget_is_focus(play_button)\n");  
+			printf("do nothing\n");  
+		}
+		else
+		{
+			printf("0 == gtk_widget_is_focus(play_button)\n");  
+			toggle_play_pause_button_callback (play_button,NULL);
+		}
+		
+        break;
+	default:
+		break;
     }
       return FALSE;
 }
@@ -647,7 +730,7 @@ GtkWidget *build_gui()
 	gtk_widget_set_size_request(GTK_WIDGET(play_controls_hbox),-1,PLAY_CONTROLS_HBOX_HEIGHT);
     //gtk_box_pack_start(GTK_BOX(main_vbox), play_controls_hbox, FALSE, FALSE, 0);  
 	gtk_box_pack_end(GTK_BOX(main_vbox), play_controls_hbox, FALSE, FALSE, 0);  
-	
+#if 0	
 	//播放/暂停按钮
     play_button = gtk_toggle_button_new();  
 	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
@@ -661,7 +744,20 @@ GtkWidget *build_gui()
     g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), play_button);  
 	//gtk_widget_set_size_request (GTK_WIDGET(play_button), 30, 30);
 	gtk_box_pack_start(GTK_BOX(play_controls_hbox), play_button, FALSE, FALSE, 10);
+#else
+	//播放/暂停按钮
+    play_button = gtk_button_new();  
+	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
+	GtkWidget* img_play= gtk_image_new_from_file("play.png");
+	//动态设置按钮的图像
+	gtk_button_set_image(GTK_BUTTON(play_button),img_play);
+    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件 TRUE表示响应鼠标键盘事件
+    gtk_widget_set_sensitive(play_button, TRUE);
 	
+    g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
+	//gtk_widget_set_size_request (GTK_WIDGET(play_button), 30, 30);
+	gtk_box_pack_start(GTK_BOX(play_controls_hbox), play_button, FALSE, FALSE, 10);
+#endif	
 	//正在播放的时间标签     
     play_time_label = gtk_label_new("00:00:00");  
     //gtk_misc_set_alignment(GTK_MISC(play_time_label), 0.0, 0.5);  
