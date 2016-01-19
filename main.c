@@ -42,6 +42,7 @@ static GtkWidget *voice_scale;
 static GtkWidget *main_vbox;  
 static GtkWidget *play_controls_hbox;   
 static GtkWidget *status_controls_hbox;
+static GtkWidget *video_title_label;  //视频标题标签
 
 static GtkWidget *close_button;   //停止按钮
 static GtkWidget *play_button;   //播放暂停按钮
@@ -547,7 +548,8 @@ gboolean load_file(gchar *uri)
 	printf("%s\n",fn);
 	
 	//更新窗口标题为视频文件名 
-    gtk_window_set_title(GTK_WINDOW(main_window),(char *)fn);  
+    //gtk_window_set_title(GTK_WINDOW(main_window),(char *)fn);  
+	gtk_label_set_text(GTK_LABEL(video_title_label),(char *)fn);
 	
 	/* Connect a callback to trigger every 200 milliseconds to 
 	* update the GUI with the playback progress. We remember 
@@ -619,16 +621,21 @@ GtkWidget *build_gui()
     status_controls_hbox = gtk_hbox_new(FALSE, 0);  
 	gtk_widget_set_size_request(GTK_WIDGET(status_controls_hbox),-1,STATUS_CONTROLS_HBOX_HEIGHT);
     gtk_box_pack_start(GTK_BOX(main_vbox), status_controls_hbox, FALSE, FALSE, 0);  
+	
+	//video_title_icon   
+	GtkWidget* img_video_title_icon= gtk_image_new_from_file("title_icon.png");
+    gtk_box_pack_start(GTK_BOX(status_controls_hbox), img_video_title_icon, FALSE, FALSE, 10);  
+	
+	//video_title_label 
+	video_title_label= gtk_label_new("");  
+    gtk_box_pack_start(GTK_BOX(status_controls_hbox), video_title_label, FALSE, FALSE, 0);  
 		
 	//关闭按钮
     close_button = gtk_button_new();  
-
 	//GtkWidget* img_close = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_BUTTON);
 	GtkWidget* img_close= gtk_image_new_from_file("close.png");
-	
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(close_button),img_close);
-
     g_signal_connect(G_OBJECT(close_button), "clicked", G_CALLBACK(toggle_close_button_callback), NULL);  
 	gtk_box_pack_end(GTK_BOX(status_controls_hbox), close_button, FALSE, FALSE, 0);
   
