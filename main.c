@@ -128,110 +128,6 @@ void *playeropen_thread(char *file)
 	
 }
 
-/************************************************************************/
-#if 0
-// 打开文件  
-static void file_open(GtkAction *action)  
-{ 
-
-	g_print("file_open\n");  
-	GtkWidget *file_chooser = gtk_file_chooser_dialog_new(  
-        "Open File", GTK_WINDOW(main_window),  
-        GTK_FILE_CHOOSER_ACTION_OPEN,  
-        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,  
-        GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,  
-        NULL);  
-  
-    if (gtk_dialog_run(GTK_DIALOG(file_chooser)) == GTK_RESPONSE_ACCEPT) 
-	{  
-		char *filename;  
-		filename = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(file_chooser));  
-		// g_signal_emit_by_name(G_OBJECT(stop_button), "clicked");  
-		if (current_filename) g_free(current_filename);  
-		current_filename = filename;  
-
-		//load file 
-        if (load_file(filename))  
-		{
-            gtk_widget_set_sensitive(GTK_WIDGET(play_button), TRUE); 
-			gtk_widget_set_sensitive(GTK_WIDGET(rewind_button), TRUE); 
-			gtk_widget_set_sensitive(GTK_WIDGET(forward_button), TRUE); 
-			gtk_widget_set_sensitive(GTK_WIDGET(fullscreen_button), TRUE); 
-			gtk_widget_set_sensitive(GTK_WIDGET(voice_slience_button), TRUE);  			
-
-		}
-
-	}
-	gtk_widget_destroy(file_chooser);
-}  
-// 退出  
-static void file_quit(GtkAction *action)  
-{  
-    gtk_main_quit();  
-}  
-// 关于  
-static void help_about(GtkAction *action)  
-{  
-	g_print("help_about\n"); 
-	GtkWidget *about_dialog = gtk_about_dialog_new();  
-	gtk_about_dialog_set_name(GTK_ABOUT_DIALOG(about_dialog), "FFMPEG Player");  
-	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), "0.0.0");  
-	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(about_dialog), "Copyright @ 2015, OS-easy");  
-
-	gtk_dialog_run(GTK_DIALOG(about_dialog));  
-	gtk_widget_destroy(about_dialog); 	
-}  
-  
-static GtkActionEntry mainwindow_action_entries[] = {  
-    { "FileMenu", "NULL", "文件" },  
-    {  
-        "OpenFile",  
-        GTK_STOCK_OPEN,  
-        "打开(O)",  
-        "<control>O",  
-        "Open a file for playback",  
-        G_CALLBACK(file_open)  
-    },  
-    {  
-        "QuitPlayer",  
-        GTK_STOCK_QUIT,  
-        "退出(Q)",  
-        "<control>Q",  
-        "Quit the media player",  
-        G_CALLBACK(file_quit)  
-    },  
-    
-    { "HelpMenu", "NULL", "帮助" },  
-    {  
-        "HelpAbout",  
-        GTK_STOCK_ABOUT,  
-        "关于",  
-        "",  
-        "About the media player",  
-        G_CALLBACK(help_about)  
-    }  
-};  
-void toggle_fullscreen_button_callback (GtkWidget *widget, gpointer data)
-{
-	g_print("toggle_fullscreen_button_callback\n"); 
-	SDL_Event sdlevent;
-	sdlevent.type = SDL_VIDEORESIZE;
-	//设置全屏的尺寸
-	sdlevent.resize.w=get_fs_screen_width();
-	sdlevent.resize.h=get_fs_screen_height()-50;
-	//sdlevent.resize.h=YSIZE;
-	//gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), YSIZE);
-	gtk_widget_set_size_request (GTK_WIDGET (video_output), get_fs_screen_width(), get_fs_screen_height()-50);
-	SDL_PushEvent(&sdlevent);
-	gtk_widget_show(GTK_WIDGET (video_output));
-	//用户不可用调整窗口大小
-    gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);
-}
-#endif
-
-/************************************************************************/
-
-
 /* Video progress bar callback function */  
 void video_seek_value_changed(GtkRange *range, gpointer data)  
 {  
@@ -391,61 +287,7 @@ void voice_seek_value_changed(GtkRange *range, gpointer data)
 		gtk_widget_show(voice_slience_button);
 	}
 }  
-#if 0
-/* Play or pause callback function */   
-void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
-{
-	GtkWidget *button = data;
-	g_print("toggle_play_pause_button_callback\n"); 
-	if(current_filename)
-	{
-		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))//play
-		{
-			
-			g_print("GTK_STOCK_MEDIA_PLAY\n");   
-			//使用内置的图标创建图像
-			//GtkWidget* img_play = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
-			//使用指定图标创建按钮图像
-			GtkWidget* img_play= gtk_image_new_from_file("play.png");
-			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(button),img_play);			
-			//gtk_widget_show(widget);
-			
-			//ffplay pause
-			SDL_Event sdlevent;
-			sdlevent.type = SDL_KEYDOWN;
-			sdlevent.key.keysym.sym = SDLK_SPACE;
-			SDL_PushEvent(&sdlevent);
-			
-			
-			
-		} 
-		else //pause
-		{
-			g_print("GTK_STOCK_MEDIA_PAUSE\n");   
-			//使用内置的图标创建图像
-			//GtkWidget* img_pause = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
-			//使用指定图标创建按钮图像
-			GtkWidget* img_pause= gtk_image_new_from_file("pause.png");
-			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(button),img_pause);
-			//gtk_widget_show(widget);
 
-			//ffplay play
-			SDL_Event sdlevent;
-			sdlevent.type = SDL_KEYDOWN;
-			sdlevent.key.keysym.sym = SDLK_SPACE;
-			SDL_PushEvent(&sdlevent);
-			
-
-		}
-	}
-	else
-	{
-		g_print("please choose open video file.\n"); 
-	}
-}
-#else
 /* Play or pause callback function */   
 void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 {
@@ -499,64 +341,7 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 		g_print("please choose open video file.\n"); 
 	}
 }	
-#endif
 
-#if 0
-/* voice or slience callback function */  
-void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
-{
-	g_print("toggle_voice_slience_button_callback\n"); 
-	if(current_filename)
-	{
-		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))//voice
-		{
-			g_print("voice\n");   
-			//使用内置的图标创建图像
-			//GtkWidget* img_play = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
-			//使用指定图标创建按钮图像
-			GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
-			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(widget),img_voice);
-			gtk_widget_show(widget);
-			
-			//recover SDL Audio
-			g_print("recover SDL Audio\n");
-			double volume_value = gtk_adjustment_get_value(GTK_ADJUSTMENT (voice_schedule_adj));
-			if(volume_value >= 0 && volume_value <= 128)
-			{
-				g_print("set_default_volume_value:%2f\n",volume_value);  
-				set_default_volume_value(volume_value);
-			}
-
-			
-
-		} 
-		else //slience
-		{
-			g_print("slience\n");   
-			//使用内置的图标创建图像
-			//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
-			//使用指定图标创建按钮图像
-			GtkWidget* img_slience= gtk_image_new_from_file("slience.png");
-			//动态设置按钮的图像
-			gtk_button_set_image(GTK_BUTTON(widget),img_slience);
-			gtk_widget_show(widget);
-			
-			//Slience SDL Audio
-			g_print("Slience SDL Audio :set_default_volume_value(0)\n");
-			gtk_adjustment_set_value (GTK_ADJUSTMENT (voice_schedule_adj),0);
-			set_default_volume_value(0);
-			
-
-
-		}
-	}
-	else
-	{
-		g_print("please choose open video file.\n"); 
-	}
-}
-#else
 /* voice or slience callback function */  
 void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 {
@@ -616,7 +401,7 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 		g_print("please choose open video file.\n"); 
 	}
 }
-#endif
+
 /* close callback function */  
 void toggle_close_button_callback(GtkWidget *widget, gpointer data)
 {
@@ -731,71 +516,16 @@ gboolean load_file(gchar *uri)
 /* Create GUI interface*/  
 GtkWidget *build_gui()  
 {  
-#if 0
-    //GtkWidget *main_vbox;  
-    //GtkWidget *voice_status_hbox;  
-	//GtkWidget *play_controls_hbox;   
-    //GtkWidget *status_controls_hbox;
-	
-	/* Get the Screen Resolution */
-	GdkScreen* screen;
-    gint width, height;
-    screen = gdk_screen_get_default();
-    width = gdk_screen_get_width(screen);
-    height = gdk_screen_get_height(screen);
-    printf("screen width: %d, height: %d\n", width, height);
-  
-    GtkActionGroup *actiongroup;  
-    GtkUIManager *ui_manager;  
-  
-    actiongroup = gtk_action_group_new("MainwindowActiongroup");  
-    gtk_action_group_add_actions(actiongroup,  
-        mainwindow_action_entries,  
-        G_N_ELEMENTS(mainwindow_action_entries),  
-        NULL);  
-  
-    ui_manager = gtk_ui_manager_new();  
-    gtk_ui_manager_insert_action_group(ui_manager, actiongroup, 0);  
-    gtk_ui_manager_add_ui_from_string(  
-        ui_manager,  
-        "<ui>"  
-        "    <menubar name='MainMenu'>"  
-        "        <menu action='FileMenu'>"  
-        "            <menuitem action='OpenFile'/>"  
-        "            <separator name='fsep1'/>"  
-        "            <menuitem action='QuitPlayer'/>"  
-        "        </menu>"  
-        "        <menu action='HelpMenu'>"  
-        "            <menuitem action='HelpAbout'/>"  
-        "        </menu>"         
-        "    </menubar>"  
-        "</ui>",  
-        -1,  
-        NULL);  
-      
-#endif 
 
     // 创建主 GtkVBOx. 其他所有都在它里面  
     // 0：各个构件高度可能不同，0：构件之间的间距为0像素  
     main_vbox = gtk_vbox_new(0, 0);  
-  
-    // 添加菜单栏  
-    //gtk_box_pack_start(GTK_BOX(main_vbox), gtk_ui_manager_get_widget(ui_manager, "/ui/MainMenu"), FALSE, FALSE, 0);  
-	
+  	
 	// status_controls_hbox :close button
     status_controls_hbox = gtk_hbox_new(FALSE, 0);  
 	gtk_widget_set_size_request(GTK_WIDGET(status_controls_hbox),-1,STATUS_CONTROLS_HBOX_HEIGHT);
     gtk_box_pack_start(GTK_BOX(main_vbox), status_controls_hbox, FALSE, FALSE, 0);  
-#if 0
-	//video_title_icon   
-	GtkWidget* img_video_title_icon= gtk_image_new_from_file("title_icon.png");
-    gtk_box_pack_start(GTK_BOX(status_controls_hbox), img_video_title_icon, FALSE, FALSE, 10);  
 	
-	//video_title_label 
-	video_title_label= gtk_label_new("");  
-    gtk_box_pack_start(GTK_BOX(status_controls_hbox), video_title_label, FALSE, FALSE, 0);  
-	
-#endif		
 	//关闭按钮
     close_button = gtk_button_new();  
 	//GtkWidget* img_close = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_BUTTON);
@@ -813,21 +543,7 @@ GtkWidget *build_gui()
 	gtk_widget_set_size_request(GTK_WIDGET(play_controls_hbox),-1,PLAY_CONTROLS_HBOX_HEIGHT);
     //gtk_box_pack_start(GTK_BOX(main_vbox), play_controls_hbox, FALSE, FALSE, 0);  
 	gtk_box_pack_end(GTK_BOX(main_vbox), play_controls_hbox, FALSE, FALSE, 0);  
-#if 0	
-	//播放/暂停按钮
-    play_button = gtk_toggle_button_new();  
-	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
-	GtkWidget* img_play= gtk_image_new_from_file("play.png");
-	//动态设置按钮的图像
-	gtk_button_set_image(GTK_BUTTON(play_button),img_play);
-    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件 TRUE表示响应鼠标键盘事件
-    gtk_widget_set_sensitive(play_button, TRUE);
-	//默认是处于播放toggle,用户再点一下就是暂停toggle
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(play_button),TRUE);
-    g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), play_button);  
-	//gtk_widget_set_size_request (GTK_WIDGET(play_button), 30, 30);
-	gtk_box_pack_start(GTK_BOX(play_controls_hbox), play_button, FALSE, FALSE, 10);
-#else
+
 	//播放/暂停按钮
     play_button = gtk_button_new();  
 	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
@@ -840,7 +556,7 @@ GtkWidget *build_gui()
     g_signal_connect(G_OBJECT(play_button), "clicked", G_CALLBACK(toggle_play_pause_button_callback), NULL);  
 	//gtk_widget_set_size_request (GTK_WIDGET(play_button), 30, 30);
 	gtk_box_pack_start(GTK_BOX(play_controls_hbox), play_button, FALSE, FALSE, 10);
-#endif	
+	
 	//正在播放的时间标签     
     play_time_label = gtk_label_new("00:00:00");  
     //gtk_misc_set_alignment(GTK_MISC(play_time_label), 0.0, 0.5);  
@@ -868,20 +584,6 @@ GtkWidget *build_gui()
     //gtk_misc_set_alignment(GTK_MISC(time_label), 0.0, 0.5);  
     gtk_box_pack_start(GTK_BOX(play_controls_hbox), total_time_label, FALSE, FALSE, 0);  
 	
-#if 0	
-	//静音按钮
-    voice_slience_button = gtk_toggle_button_new();  
-	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
-	GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
-	//动态设置按钮的图像
-	gtk_button_set_image(GTK_BUTTON(voice_slience_button),img_voice);
-    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
-    gtk_widget_set_sensitive(voice_slience_button, FALSE);
-	//默认是处于音量toggle,用户再点一下就是静音
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(voice_slience_button),TRUE);
-    g_signal_connect(G_OBJECT(voice_slience_button), "clicked", G_CALLBACK(toggle_voice_slience_button_callback), NULL);  
-	gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_slience_button, FALSE, FALSE, 0);
-#else
 	//静音按钮
     voice_slience_button = gtk_button_new();  
 	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
@@ -892,7 +594,7 @@ GtkWidget *build_gui()
     gtk_widget_set_sensitive(voice_slience_button, FALSE);
     g_signal_connect(G_OBJECT(voice_slience_button), "clicked", G_CALLBACK(toggle_voice_slience_button_callback), NULL);  
 	gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_slience_button, FALSE, FALSE, 0);
-#endif
+
 
 	// 音量进度条控制  
 	/* value, lower, upper, step_increment, page_increment, page_size */
@@ -932,19 +634,6 @@ GtkWidget *build_gui()
 	printf("video_output:width %d, height %d\n",video_output_width,video_output_height);  
 	set_video_output_height(video_output_height);
 
-#if 0	
-	//全屏按钮
-    fullscreen_button = gtk_toggle_button_new();  
-	GtkWidget* img_fullscreen = gtk_image_new_from_stock( GTK_STOCK_ZOOM_FIT ,GTK_ICON_SIZE_BUTTON);
-	//动态设置按钮的图像
-	gtk_button_set_image(GTK_BUTTON(fullscreen_button),img_fullscreen);
-    //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
-    gtk_widget_set_sensitive(fullscreen_button, FALSE);
-	//默认是处于全屏toggle,用户再点一下就是1:1播放
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fullscreen_button),TRUE);
-    g_signal_connect(G_OBJECT(fullscreen_button), "clicked", G_CALLBACK(toggle_fullscreen_button_callback), NULL);  
-	gtk_box_pack_end(GTK_BOX(play_controls_hbox), fullscreen_button, FALSE, FALSE, 10);
-#endif
     return main_vbox;  
 }  	 
 
@@ -993,8 +682,6 @@ int main(int argc, char *argv[])
 	/* hide the title bar and the boder */ 
 	gtk_window_set_decorated(GTK_WINDOW(main_window), FALSE); 	
 	
-	//用户可以自动调整窗口大小
-	//gtk_window_set_resizable (GTK_WINDOW (main_window), TRUE);
 	
 	/* 你应该总是记住连接 delete_event 信号到主窗口。这对适当的直觉行为很重要 */
 	g_signal_connect (G_OBJECT (main_window), "delete_event",G_CALLBACK (delete_event), NULL);
@@ -1002,8 +689,6 @@ int main(int argc, char *argv[])
 	//键盘获取事件
     g_signal_connect(G_OBJECT(main_window), "key-press-event", G_CALLBACK(on_main_window_key_press_event), NULL);
 	
-	//设置窗口边框
-	//gtk_container_set_border_width (GTK_CONTAINER (main_window), 0);
     // 创建主窗口GUI  
     gtk_container_add(GTK_CONTAINER(main_window), build_gui());  
 	
