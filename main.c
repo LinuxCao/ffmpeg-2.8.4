@@ -36,6 +36,7 @@
 static GtkWidget *main_window;  
 static GtkWidget *total_time_label;  //总播放的时间标签
 static GtkWidget *play_time_label;  //正在播放的时间标签
+static GtkWidget *blank_space_label; //空白标签:目的是分隔音量条和窗口边界为10个像素点  
 static GtkWidget *seek_scale;  
 static GtkWidget *video_output; 
 static GtkWidget *voice_scale;  
@@ -610,6 +611,10 @@ GtkWidget *build_gui()
 	gtk_range_set_adjustment(GTK_RANGE(voice_scale),GTK_ADJUSTMENT(voice_schedule_adj));
     g_signal_connect(G_OBJECT(voice_scale), "value-changed", G_CALLBACK(voice_seek_value_changed), NULL);  
     gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_scale, FALSE, FALSE, 0);  
+	
+	//空白标签：目的是分隔音量条和窗口边界为10个像素点   
+    blank_space_label = gtk_label_new(" ");  
+    gtk_box_pack_start(GTK_BOX(play_controls_hbox), blank_space_label, FALSE, FALSE, 0);  
 	
 	
 	// Get the size of status_controls_hbox
