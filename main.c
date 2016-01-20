@@ -630,40 +630,44 @@ void toggle_close_button_callback(GtkWidget *widget, gpointer data)
 gboolean on_main_window_key_press_event (GtkWidget *widget,GdkEventKey *event,gpointer user_data)
 {
 	g_print("on_main_window_key_press_event\n"); 
+	SDL_Event sdlevent;
     switch(event->keyval) {
     case GDK_Up:
         g_print("Up\n");
+		//ffplay forward 
+		sdlevent.type = SDL_KEYDOWN;
+		sdlevent.key.keysym.sym = SDLK_RIGHT;
+		SDL_PushEvent(&sdlevent);
         break;
     case GDK_Left:
         g_print("Left\n");
+		//ffplay rewind
+		sdlevent.type = SDL_KEYDOWN;
+		sdlevent.key.keysym.sym = SDLK_LEFT;
+		SDL_PushEvent(&sdlevent);
         break;
     case GDK_Right:
         g_print("Right\n");
+		//ffplay forward
+		sdlevent.type = SDL_KEYDOWN;
+		sdlevent.key.keysym.sym = SDLK_RIGHT;
+		SDL_PushEvent(&sdlevent);
         break;
     case GDK_Down:
         g_print("Down\n");
+		//ffplay rewind
+		sdlevent.type = SDL_KEYDOWN;
+		sdlevent.key.keysym.sym = SDLK_LEFT;
+		SDL_PushEvent(&sdlevent);
         break;
 	case GDK_Escape:
 		g_print("Esc\n");
 		//ffplay exit
-		SDL_Event sdlevent;
 		sdlevent.type = FF_QUIT_EVENT;
 		SDL_PushEvent(&sdlevent);
         break;
 	case GDK_space:
 		g_print("GDK_space\n");
-#if 0
-		if(1 == gtk_widget_is_focus(play_button)) 
-		{
-		printf("1 == gtk_widget_is_focus(play_button)\n");  
-		printf("do nothing\n");  
-		}
-		else
-		{
-		printf("0 == gtk_widget_is_focus(play_button)\n");  
-		toggle_play_pause_button_callback (play_button,NULL);
-		}
-#endif
         break;
 	default:
 		break;
