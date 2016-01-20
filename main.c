@@ -386,8 +386,8 @@ void voice_seek_value_changed(GtkRange *range, gpointer data)
 		GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
 		//动态设置按钮的图像
 		gtk_button_set_image(GTK_BUTTON(voice_slience_button),img_voice);
-		//active voice status
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(voice_slience_button),TRUE);
+		//此刻为声音状态，故设置为静音的标志位，等待下次点击就是静音处理
+		set_voice_slience_button_status(FALSE);
 		gtk_widget_show(voice_slience_button);
 	}
 }  
@@ -903,7 +903,7 @@ GtkWidget *build_gui()
 	gtk_scale_set_value_pos (GTK_SCALE(voice_scale), GTK_POS_LEFT);
 	gtk_range_set_adjustment(GTK_RANGE(voice_scale),GTK_ADJUSTMENT(voice_schedule_adj));
     g_signal_connect(G_OBJECT(voice_scale), "value-changed", G_CALLBACK(voice_seek_value_changed), NULL);  
-    gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_scale, FALSE, FALSE, 10);  
+    gtk_box_pack_start(GTK_BOX(play_controls_hbox), voice_scale, FALSE, FALSE, 0);  
 	
 	
 	// Get the size of status_controls_hbox
