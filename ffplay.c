@@ -3088,7 +3088,9 @@ static void refresh_loop_wait_event(VideoState *is, SDL_Event *event) {
     SDL_PumpEvents();
     while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_ALLEVENTS)) {
         if (!cursor_hidden && av_gettime_relative() - cursor_last_shown > CURSOR_HIDE_DELAY) {
-            SDL_ShowCursor(0);
+            //SDL_ShowCursor(0);
+			//Cursor always displays
+			SDL_ShowCursor(1);
             cursor_hidden = 1;
         }
         if (remaining_time > 0.0)
