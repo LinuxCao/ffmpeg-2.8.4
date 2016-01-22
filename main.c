@@ -280,7 +280,7 @@ void voice_seek_value_changed(GtkRange *range, gpointer data)
 	if(volume_value > 0) //silence icon -> voice icon
 	{
 		//使用指定图标创建按钮图像
-		GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
+		GtkWidget* img_voice= gtk_image_new_from_file("/usr/share/ffplay/voice.png");
 		//动态设置按钮的图像
 		gtk_button_set_image(GTK_BUTTON(voice_slience_button),img_voice);
 		//此刻为声音状态，故设置为静音的标志位，等待下次点击就是静音处理
@@ -300,7 +300,7 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 			
 			g_print("GTK_STOCK_MEDIA_PLAY\n");   
 			//使用指定图标创建按钮图像
-			GtkWidget* img_play= gtk_image_new_from_file("play.png");
+			GtkWidget* img_play= gtk_image_new_from_file("/usr/share/ffplay/play.png");
 			//动态设置按钮的图像
 			gtk_button_set_image(GTK_BUTTON(play_button),img_play);			
 		
@@ -320,7 +320,7 @@ void toggle_play_pause_button_callback (GtkWidget *widget, gpointer data)
 		{
 			g_print("GTK_STOCK_MEDIA_PAUSE\n");   
 			//使用指定图标创建按钮图像
-			GtkWidget* img_pause= gtk_image_new_from_file("pause.png");
+			GtkWidget* img_pause= gtk_image_new_from_file("/usr/share/ffplay/pause.png");
 			//动态设置按钮的图像
 			gtk_button_set_image(GTK_BUTTON(play_button),img_pause);
 	
@@ -355,7 +355,7 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 			//使用内置的图标创建图像
 			//GtkWidget* img_play = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
 			//使用指定图标创建按钮图像
-			GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
+			GtkWidget* img_voice= gtk_image_new_from_file("/usr/share/ffplay/voice.png");
 			//动态设置按钮的图像
 			gtk_button_set_image(GTK_BUTTON(widget),img_voice);
 			gtk_widget_show(widget);
@@ -380,7 +380,7 @@ void toggle_voice_slience_button_callback (GtkWidget *widget, gpointer data)
 			//使用内置的图标创建图像
 			//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,GTK_ICON_SIZE_BUTTON);
 			//使用指定图标创建按钮图像
-			GtkWidget* img_slience= gtk_image_new_from_file("slience.png");
+			GtkWidget* img_slience= gtk_image_new_from_file("/usr/share/ffplay/slience.png");
 			//动态设置按钮的图像
 			gtk_button_set_image(GTK_BUTTON(widget),img_slience);
 			gtk_widget_show(widget);
@@ -530,7 +530,7 @@ GtkWidget *build_gui()
 	//关闭按钮
     close_button = gtk_button_new();  
 	//GtkWidget* img_close = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_BUTTON);
-	GtkWidget* img_close= gtk_image_new_from_file("close.png");
+	GtkWidget* img_close= gtk_image_new_from_file("/usr/share/ffplay/close.png");
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(close_button),img_close);
 	//设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件 TRUE表示响应鼠标键盘事件
@@ -548,7 +548,7 @@ GtkWidget *build_gui()
 	//播放/暂停按钮
     play_button = gtk_button_new();  
 	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
-	GtkWidget* img_play= gtk_image_new_from_file("play.png");
+	GtkWidget* img_play= gtk_image_new_from_file("/usr/share/ffplay/play.png");
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(play_button),img_play);
     //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件 TRUE表示响应鼠标键盘事件
@@ -588,7 +588,7 @@ GtkWidget *build_gui()
 	//静音按钮
     voice_slience_button = gtk_button_new();  
 	//GtkWidget* img = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,GTK_ICON_SIZE_BUTTON);
-	GtkWidget* img_voice= gtk_image_new_from_file("voice.png");
+	GtkWidget* img_voice= gtk_image_new_from_file("/usr/share/ffplay/voice.png");
 	//动态设置按钮的图像
 	gtk_button_set_image(GTK_BUTTON(voice_slience_button),img_voice);
     //设置“敏感”属性，FALSE 表示为灰色，不响应鼠标键盘事件  
