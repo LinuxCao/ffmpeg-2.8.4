@@ -478,7 +478,7 @@ gboolean load_file(gchar *uri)
 	int err;
 	
 	//创建ffplay播放视频线程
-    err = pthread_create(&playeropen_msg_process_thread_tid, NULL, playeropen_thread, uri);
+    err = pthread_create(&playeropen_msg_process_thread_tid, NULL, (void *)playeropen_thread, uri);
     if (err != 0)
         printf("can't create thread: %s\n", strerror(err));
 	else
@@ -720,7 +720,7 @@ int main(int argc, char *argv[])
     //主界面绘制完成后，用户不可以调整窗口大小
 	gtk_window_set_resizable (GTK_WINDOW (main_window), FALSE);	
 
-	g_thread_init (NULL);
+	//g_thread_init (NULL);
 	
 	//SDL播放画面嵌入到GTK窗口,切记务必要在整个界面show之后再去获取GTK窗口ID
 	//在GtkWidget没有show出来之前是没有XID（window ID）的。

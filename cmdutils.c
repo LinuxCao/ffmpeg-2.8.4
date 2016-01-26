@@ -453,7 +453,8 @@ int locate_option(int argc, char **argv, const OptionDef *options,
 
 static void dump_argument(const char *a)
 {
-    const unsigned char *p;
+    //const unsigned char *p;
+	const char *p;
 
     for (p = a; *p; p++)
         if (!((*p >= '+' && *p <= ':') || (*p >= '@' && *p <= 'Z') ||
