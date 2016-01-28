@@ -132,19 +132,24 @@ void *playeropen_thread(char *file)
 /* Video progress bar callback function */  
 void video_seek_value_changed(GtkRange *range, gpointer data)  
 {  
+	g_print("video_seek_value_changed\n"); 
+	
+	VideoState* cur_stream;
+	cur_stream=get_videostate_for_gtk();
+	//printf("cur_stream=0x%1x\n",cur_stream);
+	//printf("cur_stream->ic=0x%1x\n",cur_stream->ic);
 
-	if(get_videostate_for_gtk() && seek_flag==TRUE)
+	if((cur_stream != NULL) && (cur_stream->ic != NULL) && (seek_flag==TRUE))
 	{
-		g_print("video_seek_value_changed\n");  
 		int64_t ts;
 		int ns, hh, mm, ss;
 		int tns, thh, tmm, tss;
 		double current_x=0.0,frac=0.0;
-		VideoState* cur_stream;
 		
 		current_x= gtk_adjustment_get_value(GTK_ADJUSTMENT (video_schedule_adj));
-		cur_stream=get_videostate_for_gtk();
 		
+		//printf("cur_stream=0x%1x\n",cur_stream);
+		//printf("cur_stream->ic=0x%1x\n",cur_stream->ic);
 		tns  = cur_stream->ic->duration / 1000000LL;
 		thh  = tns / 3600;
 		tmm  = (tns % 3600) / 60;
@@ -183,17 +188,22 @@ void video_seek_value_changed(GtkRange *range, gpointer data)
 gboolean update_time_callback()  
 {  
 	seek_flag=FALSE;
- 	//g_print("update_time_callback\n");   
-	if(get_videostate_for_gtk())
+	VideoState* cur_stream;
+	cur_stream=get_videostate_for_gtk();
+	//printf("cur_stream=0x%1x\n",cur_stream);
+	//printf("cur_stream->ic=0x%1x\n",cur_stream->ic);
+	
+	if((cur_stream != NULL) && (cur_stream->ic != NULL))
 	{
 		int ns, hh, mm, ss;
 		int tns, thh, tmm, tss;
-		VideoState* cur_stream;
 		double frac=0;
 		double current_x=0.0;
 	
+		//printf("cur_stream=0x%1x\n",cur_stream);
+		//printf("cur_stream->ic=0x%1x\n",cur_stream->ic);
+		
 		//获取总的播放时间
-		cur_stream=get_videostate_for_gtk();
 		tns  = cur_stream->ic->duration / 1000000LL;
 		thh  = tns / 3600;
 		tmm  = (tns % 3600) / 60;
