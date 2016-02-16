@@ -736,8 +736,8 @@ int main(int argc, char *argv[])
 	//在GtkWidget没有show出来之前是没有XID（window ID）的。
 	char SDL_windowhack[32];
 	//获取GTK视频显示窗口ID,并格式化字符串SDL_windowhack 
-	sprintf(SDL_windowhack, "SDL_WINDOWID=%ld", GDK_WINDOW_XID(video_output->window));
-	g_print("SDL_WINDOWID:=0x%1x\n",(unsigned int)GDK_WINDOW_XID(video_output->window)); 
+	sprintf(SDL_windowhack, "SDL_WINDOWID=%ld", GDK_WINDOW_XID(gtk_widget_get_window(video_output)));
+	g_print("SDL_WINDOWID:=0x%1x\n",(unsigned int)GDK_WINDOW_XID(gtk_widget_get_window(video_output))); 
 	//设置SDL显示窗口环境变量
 	putenv(SDL_windowhack);
 	
