@@ -3147,6 +3147,7 @@ static void event_loop(VideoState *cur_stream)
             switch (event.key.keysym.sym) {
             case SDLK_ESCAPE:
             case SDLK_q:
+				printf("SDLK_ESCAPE\n");
                 do_exit(cur_stream);
                 break;
             case SDLK_f:
