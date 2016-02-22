@@ -192,15 +192,16 @@ gboolean update_time_callback()
 	cur_stream=get_videostate_for_gtk();
 	//printf("cur_stream=0x%1x\n",cur_stream);
 	//printf("cur_stream->ic=0x%1x\n",cur_stream->ic);
+#if 0
 	if(gtk_window_is_active (GTK_WINDOW(main_window)) == TRUE)
 	{
-		printf("gtk_window_is_active (GTK_WINDOW(main_window)) == TRUE\n");
+	printf("gtk_window_is_active (GTK_WINDOW(main_window)) == TRUE\n");
 	}
 	else
 	{
-		printf("gtk_window_is_active (GTK_WINDOW(main_window)) == FALSE\n");
+	printf("gtk_window_is_active (GTK_WINDOW(main_window)) == FALSE\n");
 	}
-	
+#endif
 	if((cur_stream != NULL) && (cur_stream->ic != NULL))
 	{
 		int ns, hh, mm, ss;
