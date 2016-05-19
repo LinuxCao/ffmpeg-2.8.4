@@ -42,4 +42,4 @@ FFmpeg codebase is mainly LGPL-licensed with optional components licensed under
 GPL. Please refer to the LICENSE file for detailed information.
 
 ##Makefile
-gcc -g ffplay.c cmdutils.c main.c  -o ffplay `pkg-config --cflags --libs libavcodec libavdevice libavfilter libavformat libavutil libswresample libswscale gtk+-2.0` -g -Wall -lSDL -lpthread -I/usr/include/SDL -lm -I.  -lgthread-2.0
+gcc -g ffplay.c cmdutils.c main.c  -o gtk-ffplay `pkg-config --cflags --libs libavcodec libavdevice libavfilter libavformat libavutil libswresample libswscale gtk+-2.0`   `sdl-config --cflags --libs`  -Wall  -lm  -I/usr/include/SDL  -I.  -lpthread  -lgthread-2.0
